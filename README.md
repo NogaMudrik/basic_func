@@ -1,12 +1,7 @@
 Help on module basic_functions:
 
-NAME
-    basic_functions - Created on Wed Feb  1 04:06:34 2023
+**FUNCTIONS**
 
-DESCRIPTION
-    @author: noga mudrik
-
-FUNCTIONS
     add_arrow(ax, start, end, arrowprops={'facecolor': 'black', 'width': 1.8, 'alpha': 0.5})
         Add an arrow to the `ax` axis.
         
@@ -26,6 +21,8 @@ FUNCTIONS
         -------
         None
     
+    
+    ------------------------------------------------------------------------------------------
     add_dummy_sub_legend(ax, colors, lenf, label_base='f')
         Add a sub-legend to the plot for the specified colors.
         
@@ -37,6 +34,7 @@ FUNCTIONS
         
         Returns: None
     
+    ------------------------------------------------------------------------------------------
     add_labels(ax, xlabel='X', ylabel='Y', zlabel='', title='', xlim=None, ylim=None, zlim=None, xticklabels=array([None], dtype=object), yticklabels=array([None], dtype=object), xticks=[], yticks=[], legend=[], ylabel_params={}, zlabel_params={}, xlabel_params={}, title_params={})
         Add labels, titles, limits, etc. to a figure.
         
@@ -59,6 +57,7 @@ FUNCTIONS
         xlabel_params (dict, optional): Additional parameters for the x-axis label. Defaults to {}.
         title_params (dict, optional): Additional parameters for the title. Defaults to {}.
     
+    ------------------------------------------------------------------------------------------
     cal_next_FHN(v, w, dt=0.01, max_t=300, I_ext=0.5, b=0.7, a=0.8, tau=20)
         Calculate next v and w values for FitzHugh-Nagumo dynamics
         Inputs:
@@ -74,6 +73,7 @@ FUNCTIONS
             v_next: next v value
             w_next: next w value
     
+    ------------------------------------------------------------------------------------------
     checkEmptyList(obj)
         Parameters
         ----------
@@ -82,7 +82,8 @@ FUNCTIONS
         Returns
         -------
         Boolean variable (whether obj is a list)
-    
+
+    ------------------------------------------------------------------------------------------
     check_save_name(save_name, invalid_signs='!@#$%^&*.,:;', addi_path=[], sep='\\')
         Check if the given file name is valid and returns the final file name.
         The function replaces invalid characters in the file name with underscores ('_').
@@ -95,7 +96,8 @@ FUNCTIONS
         
         Returns:
         str: The final file name with invalid characters replaced and with additional path appended if provided.
-    
+
+    ------------------------------------------------------------------------------------------
     claculate_percent_close(reco, real, epsilon_close=0.1, return_quantiles=False, quantiles=[0.05, 0.95])
         Calculate the ratio of close (within a specific distance) points among all dynamics' points.
         
@@ -120,7 +122,8 @@ FUNCTIONS
             The first quantile (only returned if `return_quantiles` is True).
         q2: float
             The second quantile (only returned if `return_quantiles` is True).
-    
+
+    ------------------------------------------------------------------------------------------
     create_FHN(dt=0.01, max_t=100, I_ext=0.5, b=0.7, a=0.8, tau=20, v0=-0.5, w0=0, params={'exp_power': 0.9, 'change_speed': False})
         Create the FitzHugh-Nagumo dynamics
         Inputs:
@@ -138,7 +141,8 @@ FUNCTIONS
         Returns:
             v_full: list of v values at each time step
             w_full: list of w values at each time step
-    
+
+    ------------------------------------------------------------------------------------------
     create_ax(ax, nums=(1, 1), size=(10, 10), proj='d2', return_fig=False, sharey=False, sharex=False, fig=[])
         Create axes in the figure for plotting.
         
@@ -161,17 +165,19 @@ FUNCTIONS
             len_colors = number of different colors needed
         Output:
             3 X len_colors matrix decpiting the colors in the cols
-    
+
+    ------------------------------------------------------------------------------------------
     create_dynamics(type_dyn='cyl', max_time=1000, dt=0.01, change_speed=False, t_speed=<ufunc 'exp'>, axis_speed=[], t_speed_params={}, to_cent=False, return_3d=False, return_additional=False, params_ex={})
         Create ground truth dynamics
         dyn_type options:
             cyl
             f_spiral
             df_spiral
-    
+    ------------------------------------------------------------------------------------------    
     create_lorenz_mat(t=[], initial_conds=(0.0, 1.0, 1.05), txy=[])
         Create the lorenz dynamics
-    
+
+    ------------------------------------------------------------------------------------------
     create_orth_F(num_subdyns, num_neurons, evals=[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], seed_f=0, dist_type='random')
         Create orthogonal matrices.
         
@@ -184,7 +190,8 @@ FUNCTIONS
         
         Returns:
         list: List of orthogonal matrices
-    
+
+    ------------------------------------------------------------------------------------------
     create_rotation_mat(theta=0, axes='x', dims=3)
         Create a rotation matrix based on the given parameters.
         
@@ -198,7 +205,8 @@ FUNCTIONS
         
         Raises:
         ValueError: If dims is not 2 or 3.
-    
+
+    ------------------------------------------------------------------------------------------
     find_closest(vec1, vec2, metric='mse')
         Find the closest elements in vec2 for each element in vec1.
         
@@ -214,7 +222,8 @@ FUNCTIONS
         
         Example:
             find_closest([1, 2, 3], [0, 4, 5]) -> ([0, 4, 5], [0, 1, 2])
-    
+
+    ------------------------------------------------------------------------------------------
     find_dominant_row(coefficients)
         This function returns the row index of the largest absolute value of each column in the input 2D numpy array "coefficients".
         
@@ -223,10 +232,8 @@ FUNCTIONS
             
         Outputs:
             domi - a 1D numpy array of shape (n,) where each element is an integer representing the row index of the largest absolute value of each column.
-    
-    find_lows_high(coeff_row, latent_dyn, choose_meth='intersection', factor_power=0.9, initial_point='start', direction_initial='low', return_unchose=False, ref_point=[], layer_num=0)
-        IT IS AN INTER FUNCTION - DO NOT USE IT BY ITSELF
-        Calculates the coordinates of the 'high' values of a specific kayer
+
+    ------------------------------------------------------------------------------------------
     
     find_perpendicular(d1, d2, perp_length=1, prev_v=[], next_v=[], ref_point=[], choose_meth='intersection', initial_point='mid', direction_initial='low', return_unchose=False, layer_num=0)
         IT IS AN INTER FUNCTION - DO NOT USE IT BY ITSELF
@@ -241,9 +248,11 @@ FUNCTIONS
         direction_initial = to which direction take the first perp point  
         return_unchose =    whether to return unchosen directions
     
+    ------------------------------------------------------------------------------------------    
     flip_power(x1, x2)
         This function takes two arguments, x1 and x2, and returns the result of x2 raised to the power of x1 using the numpy.power function.
-    
+
+    ------------------------------------------------------------------------------------------
     init_mat(size_mat, r_seed=0, dist_type='norm', init_params={'loc': 0, 'scale': 1}, normalize=False)
         This is an initialization function to initialize matrices. 
         Inputs:
@@ -258,7 +267,8 @@ FUNCTIONS
           normalize   = whether to normalize the matrix
         Output:
             the random matrix with size 'size_mat'
-    
+
+    ------------------------------------------------------------------------------------------
     lists2list(xss)
         Flatten a list of lists into a single list.
         
@@ -271,7 +281,8 @@ FUNCTIONS
         -------
         list
             The flattened list.
-    
+
+    ------------------------------------------------------------------------------------------
     load_mat_file(mat_name, mat_path='', sep='\\')
         Load a MATLAB `.mat` file. Useful for uploading the C. elegans data.
         
@@ -288,7 +299,8 @@ FUNCTIONS
         --------
         data_dict: dict
             A dictionary containing the contents of the MATLAB file.
-    
+
+    ------------------------------------------------------------------------------------------
     load_pickle(path)
         Load a pickled object from disk.
         
@@ -297,7 +309,8 @@ FUNCTIONS
         
         Returns:
         dct (obj): The loaded object.
-    
+
+    ------------------------------------------------------------------------------------------
     load_vars(folders_names, save_name, sep='\\', ending='.pkl', full_name=False)
         Load results previously saved.
         
@@ -310,7 +323,8 @@ FUNCTIONS
         
         Example:
             load_vars('' ,  'save_c.pkl' ,sep=sep , ending = '.pkl',full_name = False)
-    
+
+    ------------------------------------------------------------------------------------------
     lorenz(x, y, z, s=10, r=25, b=2.667)
         Given:
            x, y, z: a point of interest in three dimensional space
@@ -318,7 +332,8 @@ FUNCTIONS
         Returns:
            x_dot, y_dot, z_dot: values of the lorenz attractor's partial
                derivatives at the point x, y, z
-    
+
+    ------------------------------------------------------------------------------------------
     mean_change(signal, axis=0)
         Calculate the mean change of the signal along the specified axis.
         
@@ -333,7 +348,8 @@ FUNCTIONS
         -------
         numpy.ndarray
             The mean change of the signal.
-    
+
+    ------------------------------------------------------------------------------------------
     min_dist(dotA1, dotA2, dotB1, dotB2, num_sects=500)
         Calculates the minimum euclidean distance between two discrete lines (e.g. where they intersect?).
         Inputs:
@@ -345,7 +361,8 @@ FUNCTIONS
             
         Returns:
             List of minimum distances between two lines.
-    
+
+    ------------------------------------------------------------------------------------------
     movmfunc(func, mat, window=3, direction=0, dist='uni')
         moving window with applying the function func on the matrix 'mat' towrads the direction 'direction'
         dist: can be 'uni' (uniform) or 'gaus' (Gaussian)
@@ -371,7 +388,8 @@ FUNCTIONS
         array([[ 6.,  9., 12.],
                [15., 18., 21.],
                [ 9., 12., 15.]])
-    
+
+    ------------------------------------------------------------------------------------------
     norm_coeffs(coefficients, type_norm, same_width=True, width_des=0.7, factor_power=0.9, min_width=0.01)
         Normalize the coefficients according to the specified type of normalization.
         
@@ -399,7 +417,8 @@ FUNCTIONS
         ------
         NameError
             If the `type_norm` value is not one of the allowed values ('sum_abs', 'norm', 'abs' or 'no_norm').
-    
+
+    ------------------------------------------------------------------------------------------
     norm_mat(mat, type_norm='evals', to_norm=True)
         This function comes to norm matrices by the highest eigen-value
         Inputs:
@@ -408,7 +427,8 @@ FUNCTIONS
             to_norm   = whether to norm or not to.
         Output:  
             the normalized matrix
-    
+
+    ------------------------------------------------------------------------------------------
     norm_over_time(coefficients, type_norm='normal')
         Normalize coefficients over time
         Inputs:
@@ -417,7 +437,8 @@ FUNCTIONS
                 'normal': standard normalization
         Returns:
             coefficients_norm: normalized coefficients
-    
+
+    ------------------------------------------------------------------------------------------
     nullify_part(f, axis='both', percent0=80)
         Nullify a part of a matrix.
         
@@ -428,7 +449,8 @@ FUNCTIONS
         
         Returns:
         numpy array: The input matrix with the specified values set to 0
-    
+
+    ------------------------------------------------------------------------------------------
     plot_3d_color_scatter(latent_dyn, coefficients, ax=[], figsize=(15, 10), delta=0.4, colors=[])
         Plot a 3D color scatter plot.
         
@@ -450,12 +472,14 @@ FUNCTIONS
         Returns
         -------
         None
-    
+
+    ------------------------------------------------------------------------------------------
     plot_multi_colors(store_dict, min_time_plot=0, max_time_plot=-100, colors=['green', 'red', 'blue'], ax=[], fig=[], alpha=0.99, smooth_window=3, factor_power=0.9, coefficients_n=[], to_scatter=False, to_scatter_only_one=False, choose_meth='intersection', title='')
         store_dict is a dictionary with the high estimation results. 
         example:        
             store_dict , coefficients_n = calculate_high_for_all(coefficients,choose_meth = 'intersection',width_des = width_des, latent_dyn = latent_dyn, direction_initial = direction_initial,factor_power = factor_power, return_unchose=True)
-    
+
+    ------------------------------------------------------------------------------------------
     quiver_plot(sub_dyn=[], xmin=-5, xmax=5, ymin=-5, ymax=5, ax=[], chosen_color='red', alpha=0.4, w=0.02, type_plot='quiver', zmin=-5, zmax=5, cons_color=False, return_artist=False, xlabel='x', ylabel='y', quiver_3d=False, inter=2, projection=[0, 1])
         Plots a quiver or stream plot on the specified axis.
         
@@ -505,6 +529,7 @@ FUNCTIONS
         h: matplotlib.quiver.Quiver or matplotlib.streamplot.Streamplot
             The artist instance, if return_artist is True.
     
+    ------------------------------------------------------------------------------------------    
     red_mean(mat, axis=1)
         Subtract the mean of each row or column in a matrix.
         
@@ -514,7 +539,8 @@ FUNCTIONS
         
         Returns:
         np.ndarray: The matrix with each row or column mean subtracted.
-    
+
+    ------------------------------------------------------------------------------------------
     relative_eror(reco, real, return_mean=True, func=<function nanmean at 0x000001AADA09DA20>)
         Calculate the relative reconstruction error
         Inputs:
@@ -524,7 +550,8 @@ FUNCTIONS
             func: the function to apply on the relative error of each point
         Output:
             the relative error (or the mean relative error over time if return_mean)
-    
+
+    ------------------------------------------------------------------------------------------
     remove_background(ax, grid=False, axis_off=True)
         Remove the background of a figure.
         
@@ -532,7 +559,8 @@ FUNCTIONS
         ax (subplot): The subplot to be edited.
         grid (bool, optional): Whether to display grid lines. Defaults to False.
         axis_off (bool, optional): Whether to display axis lines. Defaults to True.
-    
+
+    ------------------------------------------------------------------------------------------
     remove_edges(ax, include_ticks=False, top=False, right=False, bottom=False, left=False)
         Remove the specified edges (spines) of the plot and optionally the ticks of the plot.
         
@@ -554,7 +582,8 @@ FUNCTIONS
         Returns
         -------
         None
-    
+
+    ------------------------------------------------------------------------------------------
     rgb_to_hex(rgb_vec)
         Convert a RGB vector to a hexadecimal color code.
         
@@ -567,7 +596,7 @@ FUNCTIONS
         Example:
         >>> rgb_to_hex([0.5, 0.2, 0.8])
         '#8033CC'
-    
+    ------------------------------------------------------------------------------------------    
     saveLoad(opt, filename)
         Save or load a global variable 'calc'
         
@@ -581,7 +610,8 @@ FUNCTIONS
         Returns
         -------
         None
-    
+
+    ------------------------------------------------------------------------------------------
     save_file_dynamics(save_name, folders_names, to_save=[], invalid_signs='!@#$%^&*.,:;', sep='\\', type_save='.npy')
         Save dynamics & model results to disk.
         
@@ -595,7 +625,8 @@ FUNCTIONS
         
         Returns:
         None
-    
+
+    ------------------------------------------------------------------------------------------
     sigmoid(x, std=1)
         This function computes the sigmoid function of a given input x, with a standard deviation "std". 
         Parameters
@@ -607,7 +638,8 @@ FUNCTIONS
         -------
         np.array
             The sigmoid function maps any input value to the range of 0 and 1, making it useful for binary classification problems and as an activation function in neural networks.
-    
+
+    ------------------------------------------------------------------------------------------
     spec_corr(v1, v2, to_abs=True)
         Compute the absolute value of the correlation between two arrays.
         
@@ -618,7 +650,8 @@ FUNCTIONS
         
         Returns:
         - float: The absolute value of the correlation between `v1` and `v2`.
-    
+
+    ------------------------------------------------------------------------------------------
     str2bool(str_to_change)
         Transform a string representation of a boolean value to a boolean variable.
         
@@ -630,7 +663,8 @@ FUNCTIONS
         
         Example:
             str2bool('true') -> True
-    
+
+    ------------------------------------------------------------------------------------------
     visualize_dyn(dyn, ax=[], params_plot={}, turn_off_back=False, marker_size=10, include_line=False, color_sig=[], cmap='cool', return_fig=False, color_by_dominant=False, coefficients=[], figsize=(5, 5), colorbar=False, colors=[], vmin=None, vmax=None, color_mix=False, alpha=0.4, colors_dyns=array(['r', 'g', 'b', 'yellow'], dtype='<U6'), add_text='t ', text_points=[], fontsize_times=18, marker='o', delta_text=0.5, color_for_0=None, legend=[], fig=[], return_mappable=False, remove_back=True, edgecolors='none')
         Plot the multi-dimensional dynamics
         Inputs:
@@ -646,12 +680,5 @@ FUNCTIONS
             color_mix    = relevant only if  color_by_dominant. In this case the colors need to be in the form of [r,g,b]
         Output:
             (only if return_fig) -> returns the figure
-
-DATA
-    e = 2.718281828459045
-    sep = r'\'
-
-FILE
-    e:\all_phd_materials\codes\basic_func\basic_functions.py
 
 
