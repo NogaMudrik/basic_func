@@ -18,4 +18,4 @@ def output_help_to_file(filepath, func):
         
 sys.path.insert(0, '/path/to/application/app/folder')
 
-output_help_to_file(r'description_text.txt', b_func)
+output_help_to_file(r'readme.md', b_func)
