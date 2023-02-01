@@ -1,0 +1,657 @@
+Help on module basic_functions:
+
+NAME
+    basic_functions - Created on Wed Feb  1 04:06:34 2023
+
+DESCRIPTION
+    @author: noga mudrik
+
+FUNCTIONS
+    add_arrow(ax, start, end, arrowprops={'facecolor': 'black', 'width': 1.8, 'alpha': 0.5})
+        Add an arrow to the `ax` axis.
+        
+        Parameters
+        ----------
+        ax : matplotlib.axes._subplots.AxesSubplot
+            The axis to add the arrow to.
+        start : tuple of floats
+            The starting coordinates of the arrow in (x, y) format.
+        end : tuple of floats
+            The ending coordinates of the arrow in (x, y) format.
+        arrowprops : dict, optional
+            A dictionary of properties for the arrow, by default 
+            {'facecolor': 'black', 'width': 1.8, 'alpha': 0.5}.
+            
+        Returns
+        -------
+        None
+    
+    add_dummy_sub_legend(ax, colors, lenf, label_base='f')
+        Add a sub-legend to the plot for the specified colors.
+        
+        Parameters:
+        - ax (matplotlib.axes.Axes): The matplotlib axes to add the sub-legend to.
+        - colors (list): A list of colors to add to the sub-legend.
+        - lenf (int): The number of colors to include in the sub-legend.
+        - label_base (str): The base string for the label of each color. (default: 'f')
+        
+        Returns: None
+    
+    add_labels(ax, xlabel='X', ylabel='Y', zlabel='', title='', xlim=None, ylim=None, zlim=None, xticklabels=array([None], dtype=object), yticklabels=array([None], dtype=object), xticks=[], yticks=[], legend=[], ylabel_params={}, zlabel_params={}, xlabel_params={}, title_params={})
+        Add labels, titles, limits, etc. to a figure.
+        
+        Parameters:
+        ax (subplot): The subplot to be edited.
+        xlabel (str, optional): The label for the x-axis. Defaults to 'X'.
+        ylabel (str, optional): The label for the y-axis. Defaults to 'Y'.
+        zlabel (str, optional): The label for the z-axis. Defaults to ''.
+        title (str, optional): The title for the plot. Defaults to ''.
+        xlim (list or tuple, optional): The limits for the x-axis. Defaults to None.
+        ylim (list or tuple, optional): The limits for the y-axis. Defaults to None.
+        zlim (list or tuple, optional): The limits for the z-axis. Defaults to None.
+        xticklabels (array, optional): The labels for the x-axis tick marks. Defaults to np.array([None]).
+        yticklabels (array, optional): The labels for the y-axis tick marks. Defaults to np.array([None]).
+        xticks (list, optional): The positions for the x-axis tick marks. Defaults to [].
+        yticks (list, optional): The positions for the y-axis tick marks. Defaults to [].
+        legend (list, optional): The legend for the plot. Defaults to [].
+        ylabel_params (dict, optional): Additional parameters for the y-axis label. Defaults to {}.
+        zlabel_params (dict, optional): Additional parameters for the z-axis label. Defaults to {}.
+        xlabel_params (dict, optional): Additional parameters for the x-axis label. Defaults to {}.
+        title_params (dict, optional): Additional parameters for the title. Defaults to {}.
+    
+    cal_next_FHN(v, w, dt=0.01, max_t=300, I_ext=0.5, b=0.7, a=0.8, tau=20)
+        Calculate next v and w values for FitzHugh-Nagumo dynamics
+        Inputs:
+            v: current v value
+            w: current w value
+            dt: time step
+            max_t: maximum time
+            I_ext: external current
+            b: model parameter
+            a: model parameter
+            tau: model parameter
+        Returns:
+            v_next: next v value
+            w_next: next w value
+    
+    checkEmptyList(obj)
+        Parameters
+        ----------
+        obj : any type
+        
+        Returns
+        -------
+        Boolean variable (whether obj is a list)
+    
+    check_save_name(save_name, invalid_signs='!@#$%^&*.,:;', addi_path=[], sep='\\')
+        Check if the given file name is valid and returns the final file name.
+        The function replaces invalid characters in the file name with underscores ('_').
+        
+        Parameters:
+        save_name (str): The name of the file to be saved.
+        invalid_signs (str, optional): A string of invalid characters. Defaults to '!@#$%^&*.,:;'.
+        addi_path (list, optional): A list of additional paths to be appended to the file name. Defaults to [].
+        sep (str, optional): The separator used between different elements of the path. Defaults to the system separator.
+        
+        Returns:
+        str: The final file name with invalid characters replaced and with additional path appended if provided.
+    
+    claculate_percent_close(reco, real, epsilon_close=0.1, return_quantiles=False, quantiles=[0.05, 0.95])
+        Calculate the ratio of close (within a specific distance) points among all dynamics' points.
+        
+        Parameters:
+        -----------
+        reco: k x T numpy array
+            The reconstructed dynamics matrix.
+        real: k x T numpy array
+            The real dynamics matrix (ground truth).
+        epsilon_close: float, optional (default: 0.1)
+            The threshold for distance.
+        return_quantiles: bool, optional (default: False)
+            Whether to return confidence interval values.
+        quantiles: list of float, optional (default: [0.05, 0.95])
+            The lower and higher limits for the quantiles.
+        
+        Returns:
+        --------
+        mean_close: float
+            The mean of the close enough points.
+        q1: float
+            The first quantile (only returned if `return_quantiles` is True).
+        q2: float
+            The second quantile (only returned if `return_quantiles` is True).
+    
+    create_FHN(dt=0.01, max_t=100, I_ext=0.5, b=0.7, a=0.8, tau=20, v0=-0.5, w0=0, params={'exp_power': 0.9, 'change_speed': False})
+        Create the FitzHugh-Nagumo dynamics
+        Inputs:
+            dt: time step
+            max_t: maximum time
+            I_ext: external current
+            b: model parameter
+            a: model parameter
+            tau: model parameter
+            v0: initial condition for v
+            w0: initial condition for w
+            params: dictionary of additional parameters
+                exp_power: power to raise time to for non-uniform time
+                change_speed: Boolean to determine whether to change time speed
+        Returns:
+            v_full: list of v values at each time step
+            w_full: list of w values at each time step
+    
+    create_ax(ax, nums=(1, 1), size=(10, 10), proj='d2', return_fig=False, sharey=False, sharex=False, fig=[])
+        Create axes in the figure for plotting.
+        
+        Parameters:
+        ax (list or Axes): List of Axes objects or a single Axes object
+        nums (tuple): Number of rows and columns for the subplots (default (1,1))
+        size (tuple): Size of the figure (default (10,10))
+        proj (str): Projection type ('d2' for 2D or 'd3' for 3D) (default 'd2')
+        return_fig (bool): Return the figure object in addition to the Axes object (default False)
+        sharey (bool): Share y axis between subplots (default False)
+        sharex (bool): Share x axis between subplots (default False)
+        fig (Figure): Figure object
+        
+        Returns:
+        Axes or tuple: The Axes object(s) for plotting
+    
+    create_colors(len_colors, perm=[0, 1, 2])
+        Create a set of discrete colors with a one-directional order
+        Input: 
+            len_colors = number of different colors needed
+        Output:
+            3 X len_colors matrix decpiting the colors in the cols
+    
+    create_dynamics(type_dyn='cyl', max_time=1000, dt=0.01, change_speed=False, t_speed=<ufunc 'exp'>, axis_speed=[], t_speed_params={}, to_cent=False, return_3d=False, return_additional=False, params_ex={})
+        Create ground truth dynamics
+        dyn_type options:
+            cyl
+            f_spiral
+            df_spiral
+    
+    create_lorenz_mat(t=[], initial_conds=(0.0, 1.0, 1.05), txy=[])
+        Create the lorenz dynamics
+    
+    create_orth_F(num_subdyns, num_neurons, evals=[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], seed_f=0, dist_type='random')
+        Create orthogonal matrices.
+        
+        Parameters:
+        num_subdyns (int): Number of sub-dynamics
+        num_neurons (int): Number of neurons
+        evals (list): List of eigenvalues.
+        seed_f (int): Seed for the random number generator (default 0)
+        dist_type (str): Distribution type ('random')
+        
+        Returns:
+        list: List of orthogonal matrices
+    
+    create_rotation_mat(theta=0, axes='x', dims=3)
+        Create a rotation matrix based on the given parameters.
+        
+        Parameters:
+        theta (float, optional): Angle in radians for rotation. Default is 0.
+        axes (str, optional): Axis for rotation. Must be one of 'x', 'y' or 'z'. Default is 'x'.
+        dims (int, optional): Dimension of the rotation. Must be either 2 or 3. Default is 3.
+        
+        Returns:
+        numpy.ndarray: Rotation matrix of shape (dims, dims).
+        
+        Raises:
+        ValueError: If dims is not 2 or 3.
+    
+    find_closest(vec1, vec2, metric='mse')
+        Find the closest elements in vec2 for each element in vec1.
+        
+        Parameters:
+        vec1 (ndarray): 1-D numpy array
+        vec2 (ndarray): 1-D numpy array
+        metric (str): Metric to use for comparison, 'mse' by default
+        
+        Returns:
+        tuple:
+            - ndarray: closest elements in vec2 for each element in vec1
+            - ndarray: indices of closest elements in vec2 for each element in vec1
+        
+        Example:
+            find_closest([1, 2, 3], [0, 4, 5]) -> ([0, 4, 5], [0, 1, 2])
+    
+    find_dominant_row(coefficients)
+        This function returns the row index of the largest absolute value of each column in the input 2D numpy array "coefficients".
+        
+        Inputs:
+            coefficients - a 2D numpy array of shape (m, n) where m is the number of rows and n is the number of columns.
+            
+        Outputs:
+            domi - a 1D numpy array of shape (n,) where each element is an integer representing the row index of the largest absolute value of each column.
+    
+    find_lows_high(coeff_row, latent_dyn, choose_meth='intersection', factor_power=0.9, initial_point='start', direction_initial='low', return_unchose=False, ref_point=[], layer_num=0)
+        IT IS AN INTER FUNCTION - DO NOT USE IT BY ITSELF
+        Calculates the coordinates of the 'high' values of a specific kayer
+    
+    find_perpendicular(d1, d2, perp_length=1, prev_v=[], next_v=[], ref_point=[], choose_meth='intersection', initial_point='mid', direction_initial='low', return_unchose=False, layer_num=0)
+        IT IS AN INTER FUNCTION - DO NOT USE IT BY ITSELF
+        This function find the 2 point of the orthogonal vector to a vector defined by points d1,d2
+        d1 =                first data point
+        d2 =                second data point
+        perp_length =       desired width
+        prev_v =            previous value of v. Needed only if choose_meth == 'prev'
+        next_v =            next value of v. Needed only if choose_meth == 'prev'
+        ref_point =         reference point for the 'smooth' case, or for 2nd+ layers
+        choose_meth =       'intersection' (eliminate intersections) OR 'smooth' (smoothing with previous prediction) OR 'prev' (eliminate convexity)
+        direction_initial = to which direction take the first perp point  
+        return_unchose =    whether to return unchosen directions
+    
+    flip_power(x1, x2)
+        This function takes two arguments, x1 and x2, and returns the result of x2 raised to the power of x1 using the numpy.power function.
+    
+    init_mat(size_mat, r_seed=0, dist_type='norm', init_params={'loc': 0, 'scale': 1}, normalize=False)
+        This is an initialization function to initialize matrices. 
+        Inputs:
+          size_mat    = 2-element tuple or list, describing the shape of the mat
+          r_seed      = random seed (should be integer)
+          dist_type   = distribution type for initialization; can be 'norm' (normal dist), 'uni' (uniform dist),'inti', 'sparse', 'regional', 'zeros'
+          init_params = a dictionary with params for initialization. The keys depends on 'dist_type'.
+                        keys for norm -> ['loc','scale']
+                        keys for inti and uni -> ['low','high']
+                        keys for sparse -> ['k'] -> number of non-zeros in each row
+                        keys for regional -> ['k'] -> repeats of the sub-dynamics allocations
+          normalize   = whether to normalize the matrix
+        Output:
+            the random matrix with size 'size_mat'
+    
+    lists2list(xss)
+        Flatten a list of lists into a single list.
+        
+        Parameters
+        ----------
+        xss : list of lists
+            The list of lists to be flattened.
+        
+        Returns
+        -------
+        list
+            The flattened list.
+    
+    load_mat_file(mat_name, mat_path='', sep='\\')
+        Load a MATLAB `.mat` file. Useful for uploading the C. elegans data.
+        
+        Parameters:
+        -----------
+        mat_name: str
+            The name of the MATLAB file.
+        mat_path: str, optional (default: '')
+            The path to the MATLAB file.
+        sep: str, optional (default: the system separator)
+            The separator to use in the file path.
+        
+        Returns:
+        --------
+        data_dict: dict
+            A dictionary containing the contents of the MATLAB file.
+    
+    load_pickle(path)
+        Load a pickled object from disk.
+        
+        Parameters:
+        path (str): The path to the pickled object.
+        
+        Returns:
+        dct (obj): The loaded object.
+    
+    load_vars(folders_names, save_name, sep='\\', ending='.pkl', full_name=False)
+        Load results previously saved.
+        
+        Parameters:
+        folders_names (str/list): List of folders to form the path or a string representation of the path
+        save_name (str): Name of the saved file
+        sep (str): Separator to join the folders
+        ending (str): File extension of the saved file
+        full_name (bool): If True, folders_names and sep are ignored
+        
+        Example:
+            load_vars('' ,  'save_c.pkl' ,sep=sep , ending = '.pkl',full_name = False)
+    
+    lorenz(x, y, z, s=10, r=25, b=2.667)
+        Given:
+           x, y, z: a point of interest in three dimensional space
+           s, r, b: parameters defining the lorenz attractor
+        Returns:
+           x_dot, y_dot, z_dot: values of the lorenz attractor's partial
+               derivatives at the point x, y, z
+    
+    mean_change(signal, axis=0)
+        Calculate the mean change of the signal along the specified axis.
+        
+        Parameters
+        ----------
+        signal : numpy.ndarray
+            The signal data.
+        axis : int, optional
+            The axis along which the mean change is calculated, by default 0.
+        
+        Returns
+        -------
+        numpy.ndarray
+            The mean change of the signal.
+    
+    min_dist(dotA1, dotA2, dotB1, dotB2, num_sects=500)
+        Calculates the minimum euclidean distance between two discrete lines (e.g. where they intersect?).
+        Inputs:
+            dotA1: Tuple of x,y coordinate of first point on line A
+            dotA2: Tuple of x,y coordinate of second point on line A
+            dotB1: Tuple of x,y coordinate of first point on line B
+            dotB2: Tuple of x,y coordinate of second point on line B
+            num_sects: Number of sections the lines should be divided into to calculate distance
+            
+        Returns:
+            List of minimum distances between two lines.
+    
+    movmfunc(func, mat, window=3, direction=0, dist='uni')
+        moving window with applying the function func on the matrix 'mat' towrads the direction 'direction'
+        dist: can be 'uni' (uniform) or 'gaus' (Gaussian)
+        
+        Calculates the moving window with the application of the given function `func` on the matrix `mat` in the direction `direction`.
+        
+        Parameters:
+        - func (callable): The function to apply.
+        - mat (numpy.ndarray): The matrix to apply the function to.
+        - window (int): The size of the moving window. (default: 3)
+        - direction (int): The direction to apply the moving window. 0 for row-wise and 1 for column-wise. (default: 0)
+        - dist (str): The distribution to use for weighting. Can be 'uni' for uniform or 'gaus' for Gaussian. (default: 'uni')
+        
+        Returns:
+        numpy.ndarray: The result of applying the moving window to `mat`.
+        
+        Example:
+        >>> import numpy as np
+        >>> def myfunc(arr, axis=None):
+        ...     return np.sum(arr, axis=axis)
+        >>> mat = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+        >>> movmfunc(myfunc, mat, window=3, direction=0, dist='uni')
+        array([[ 6.,  9., 12.],
+               [15., 18., 21.],
+               [ 9., 12., 15.]])
+    
+    norm_coeffs(coefficients, type_norm, same_width=True, width_des=0.7, factor_power=0.9, min_width=0.01)
+        Normalize the coefficients according to the specified type of normalization.
+        
+        Parameters
+        ----------
+        coefficients : numpy.ndarray
+            The coefficients to be normalized.
+        type_norm : str
+            The type of normalization to be applied. Can be 'sum_abs', 'norm', 'abs' or 'no_norm'.
+        same_width : bool, optional
+            Whether to enforce the same width for all coefficients, by default True.
+        width_des : float, optional
+            The desired width, by default 0.7.
+        factor_power : float, optional
+            The power factor to apply, by default 0.9.
+        min_width : float, optional
+            The minimum width allowed, by default 0.01.
+        
+        Returns
+        -------
+        numpy.ndarray
+            The normalized coefficients.
+        
+        Raises
+        ------
+        NameError
+            If the `type_norm` value is not one of the allowed values ('sum_abs', 'norm', 'abs' or 'no_norm').
+    
+    norm_mat(mat, type_norm='evals', to_norm=True)
+        This function comes to norm matrices by the highest eigen-value
+        Inputs:
+            mat       = the matrix to norm
+            type_norm = what type of normalization to apply. Can be 'evals' (divide by max eval), 'max' (divide by max value), 'exp' (matrix exponential)
+            to_norm   = whether to norm or not to.
+        Output:  
+            the normalized matrix
+    
+    norm_over_time(coefficients, type_norm='normal')
+        Normalize coefficients over time
+        Inputs:
+            coefficients: array of coefficients
+            type_norm: type of normalization
+                'normal': standard normalization
+        Returns:
+            coefficients_norm: normalized coefficients
+    
+    nullify_part(f, axis='both', percent0=80)
+        Nullify a part of a matrix.
+        
+        Parameters:
+        f (numpy array): The input matrix
+        axis (str or int): The axis along which to perform the operation ('0', '1', or 'both') (default 'both')
+        percent0 (int): The percentile value used to determine which values to nullify (default 80)
+        
+        Returns:
+        numpy array: The input matrix with the specified values set to 0
+    
+    plot_3d_color_scatter(latent_dyn, coefficients, ax=[], figsize=(15, 10), delta=0.4, colors=[])
+        Plot a 3D color scatter plot.
+        
+        Parameters
+        ----------
+        latent_dyn : numpy.ndarray
+            A 3xN numpy array representing the latent dynamics.
+        coefficients : numpy.ndarray
+            A KxN numpy array representing the coefficients.
+        ax : matplotlib.axes._subplots.AxesSubplot, optional
+            A 3D axis to plot on, by default []
+        figsize : tuple, optional
+            The size of the figure, by default (15, 10)
+        delta : float, optional
+            The delta between each row, by default 0.4
+        colors : list of str, optional
+            The colors for each row, by default []
+        
+        Returns
+        -------
+        None
+    
+    plot_multi_colors(store_dict, min_time_plot=0, max_time_plot=-100, colors=['green', 'red', 'blue'], ax=[], fig=[], alpha=0.99, smooth_window=3, factor_power=0.9, coefficients_n=[], to_scatter=False, to_scatter_only_one=False, choose_meth='intersection', title='')
+        store_dict is a dictionary with the high estimation results. 
+        example:        
+            store_dict , coefficients_n = calculate_high_for_all(coefficients,choose_meth = 'intersection',width_des = width_des, latent_dyn = latent_dyn, direction_initial = direction_initial,factor_power = factor_power, return_unchose=True)
+    
+    quiver_plot(sub_dyn=[], xmin=-5, xmax=5, ymin=-5, ymax=5, ax=[], chosen_color='red', alpha=0.4, w=0.02, type_plot='quiver', zmin=-5, zmax=5, cons_color=False, return_artist=False, xlabel='x', ylabel='y', quiver_3d=False, inter=2, projection=[0, 1])
+        Plots a quiver or stream plot on the specified axis.
+        
+        Parameters
+        ----------
+        sub_dyn: numpy.ndarray, default: []
+            The matrix whose eigenvectors need to be plotted. If an empty list is provided, the default sub_dyn will be set to [[0,-1],[1,0]]
+        xmin: float, default: -5
+            The minimum value for x-axis.
+        xmax: float, default: 5
+            The maximum value for x-axis.
+        ymin: float, default: -5
+            The minimum value for y-axis.
+        ymax: float, default: 5
+            The maximum value for y-axis.
+        ax: matplotlib.axes._subplots.AxesSubplot or list, default: []
+            The axis on which the quiver or stream plot will be plotted. If a list is provided, a new figure will be created.
+        chosen_color: str or list, default: 'red'
+            The color of the quiver or stream plot. 
+        alpha: float, default: 0.4
+            The alpha/transparency value of the quiver or stream plot.
+        w: float, default: 0.02
+            The width of the arrows in quiver plot.
+        type_plot: str, default: 'quiver'
+            The type of plot. Can either be 'quiver' or 'streamplot'.
+        zmin: float, default: -5
+            The minimum value for z-axis (for 3D plots).
+        zmax: float, default: 5
+            The maximum value for z-axis (for 3D plots).
+        cons_color: bool, default: False
+            If True, a constant color will be used for the stream plot. If False, the color will be proportional to the magnitude of the matrix.
+        return_artist: bool, default: False
+            If True, the artist instance is returned.
+        xlabel: str, default: 'x'
+            Label for x-axis.
+        ylabel: str, default: 'y'
+            Label for y-axis.
+        quiver_3d: bool, default: False
+            If True, a 3D quiver plot will be generated.
+        inter: float, default: 2
+            The step size for the grids in 3D plots.
+        projection: list, default: [0,1]
+            The indices of the columns in sub_dyn that will be used for plotting.
+            
+        Returns
+        -------
+        h: matplotlib.quiver.Quiver or matplotlib.streamplot.Streamplot
+            The artist instance, if return_artist is True.
+    
+    red_mean(mat, axis=1)
+        Subtract the mean of each row or column in a matrix.
+        
+        Parameters:
+        mat (np.ndarray): The input matrix.
+        axis (int, optional): The axis along which the mean should be computed. Default is 1 (mean of each row).
+        
+        Returns:
+        np.ndarray: The matrix with each row or column mean subtracted.
+    
+    relative_eror(reco, real, return_mean=True, func=<function nanmean at 0x000001AADA09DA20>)
+        Calculate the relative reconstruction error
+        Inputs:
+            reco: k X T reconstructed dynamics matrix
+            real: k X T real dynamics matrix (ground truth)
+            return_mean: reaturn the average of the reconstruction error over time
+            func: the function to apply on the relative error of each point
+        Output:
+            the relative error (or the mean relative error over time if return_mean)
+    
+    remove_background(ax, grid=False, axis_off=True)
+        Remove the background of a figure.
+        
+        Parameters:
+        ax (subplot): The subplot to be edited.
+        grid (bool, optional): Whether to display grid lines. Defaults to False.
+        axis_off (bool, optional): Whether to display axis lines. Defaults to True.
+    
+    remove_edges(ax, include_ticks=False, top=False, right=False, bottom=False, left=False)
+        Remove the specified edges (spines) of the plot and optionally the ticks of the plot.
+        
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            The matplotlib axes object of the plot.
+        include_ticks : bool, optional
+            Whether to include the ticks, by default False.
+        top : bool, optional
+            Whether to remove the top edge, by default False.
+        right : bool, optional
+            Whether to remove the right edge, by default False.
+        bottom : bool, optional
+            Whether to remove the bottom edge, by default False.
+        left : bool, optional
+            Whether to remove the left edge, by default False.
+        
+        Returns
+        -------
+        None
+    
+    rgb_to_hex(rgb_vec)
+        Convert a RGB vector to a hexadecimal color code.
+        
+        Parameters:
+        rgb_vec (list): A 3-element list of floats representing the red, green, and blue components of the color. The values should be between 0 and 1.
+        
+        Returns:
+        str: The hexadecimal color code as a string.
+        
+        Example:
+        >>> rgb_to_hex([0.5, 0.2, 0.8])
+        '#8033CC'
+    
+    saveLoad(opt, filename)
+        Save or load a global variable 'calc'
+        
+        Parameters
+        ----------
+        opt : str
+            the option, either "save" or "load"
+        filename : str
+            the name of the file to save or load from
+            
+        Returns
+        -------
+        None
+    
+    save_file_dynamics(save_name, folders_names, to_save=[], invalid_signs='!@#$%^&*.,:;', sep='\\', type_save='.npy')
+        Save dynamics & model results to disk.
+        
+        Parameters:
+        save_name (str): The name of the file to save.
+        folders_names (List[str]): List of folder names where the file should be saved.
+        to_save (List, optional): List of values to save. Defaults to [].
+        invalid_signs (str, optional): String of invalid characters to be removed from the save name. Defaults to '!@#$%^&*.,:;'.
+        sep (str, optional): Separator to use when joining `folders_names`. Defaults to `os.sep`.
+        type_save (str, optional): The file format to save the data in. Valid options are '.npy' and '.pkl'. Defaults to '.npy'.
+        
+        Returns:
+        None
+    
+    sigmoid(x, std=1)
+        This function computes the sigmoid function of a given input x, with a standard deviation "std". 
+        Parameters
+        ----------
+        x : np.array / list
+        std :  The default is 1.
+        
+        Returns
+        -------
+        np.array
+            The sigmoid function maps any input value to the range of 0 and 1, making it useful for binary classification problems and as an activation function in neural networks.
+    
+    spec_corr(v1, v2, to_abs=True)
+        Compute the absolute value of the correlation between two arrays.
+        
+        Parameters:
+        - v1 (numpy.ndarray): The first array to compute the correlation between.
+        - v2 (numpy.ndarray): The second array to compute the correlation between.
+        - to_abs (bool): Whether to compute the absolute value of the correlation (default: True).
+        
+        Returns:
+        - float: The absolute value of the correlation between `v1` and `v2`.
+    
+    str2bool(str_to_change)
+        Transform a string representation of a boolean value to a boolean variable.
+        
+        Parameters:
+        str_to_change (str): String representation of a boolean value
+        
+        Returns:
+        bool: Boolean representation of the input string
+        
+        Example:
+            str2bool('true') -> True
+    
+    visualize_dyn(dyn, ax=[], params_plot={}, turn_off_back=False, marker_size=10, include_line=False, color_sig=[], cmap='cool', return_fig=False, color_by_dominant=False, coefficients=[], figsize=(5, 5), colorbar=False, colors=[], vmin=None, vmax=None, color_mix=False, alpha=0.4, colors_dyns=array(['r', 'g', 'b', 'yellow'], dtype='<U6'), add_text='t ', text_points=[], fontsize_times=18, marker='o', delta_text=0.5, color_for_0=None, legend=[], fig=[], return_mappable=False, remove_back=True, edgecolors='none')
+        Plot the multi-dimensional dynamics
+        Inputs:
+            dyn          = dynamics to plot. Should be a np.array with size k X T
+            ax           = the subplot to plot in (optional)
+            params_plot  = additional parameters for the plotting (optional). Can include plotting-related keys like xlabel, ylabel, title, etc.
+            turn_off_back= disable backgroud of the plot? (optional). Boolean
+            marker_size  = marker size of the plot (optional). Integer
+            include_line = add a curve to the plot (in addition to the scatter plot). Boolean
+            color_sig    = the color signal. if empty and color_by_dominant - color by the dominant dynamics. If empty and not color_by_dominant - color by time.
+            cmap         = cmap
+            colors       = if not empty -> pre-defined colors for the different sub-dynamics. Otherwise - colors are according to the cmap.
+            color_mix    = relevant only if  color_by_dominant. In this case the colors need to be in the form of [r,g,b]
+        Output:
+            (only if return_fig) -> returns the figure
+
+DATA
+    e = 2.718281828459045
+    sep = r'\'
+
+FILE
+    e:\all_phd_materials\codes\basic_func\basic_functions.py
+
+

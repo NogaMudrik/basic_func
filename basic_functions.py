@@ -1284,8 +1284,6 @@ def create_colors(len_colors, perm = [0,1,2]):
     colors = colors[perm, :]
     return colors
 
-      
-
 
 def relative_eror(reco,real, return_mean = True, func = np.nanmean):
     """
@@ -1341,7 +1339,6 @@ def claculate_percent_close(reco, real, epsilon_close = 0.1, return_quantiles = 
             q2 = np.mean(close_enough)
         return np.mean(close_enough), q1, q2
     return np.mean(close_enough)
-
     
 def load_mat_file(mat_name , mat_path = '',sep = sep):
     """
@@ -1364,8 +1361,6 @@ def load_mat_file(mat_name , mat_path = '',sep = sep):
     
     data_dict = mat73.loadmat(mat_path+sep+mat_name)
     return data_dict
-
-
 
 def min_dist(dotA1, dotA2, dotB1, dotB2, num_sects = 500):
     """
@@ -1391,10 +1386,7 @@ def min_dist(dotA1, dotA2, dotB1, dotB2, num_sects = 500):
             pairBy = y_lin_or[pairB_num]
             dist = (pairAx - pairBx)**2 + (pairAy - pairBy)**2
             dist_list.append(dist)
-    return dist_list
-            
-    
-    
+    return dist_list         
 #%% FHN model
 # taken from https://www.normalesup.org/~doulcier/teaching/modeling/excitable_systems.html    
     
@@ -1456,8 +1448,7 @@ def cal_next_FHN(v,w, dt = 0.01, max_t = 300, I_ext = 0.5,
     """    
     v_next = v + dt*(v - (v**3)/3 - w + I_ext)
     w_next = w + dt/tau*(v + a - b*w)
-    return v_next, w_next
- 
+    return v_next, w_next 
 
 def norm_over_time(coefficients, type_norm = 'normal'):
     """
@@ -1550,11 +1541,9 @@ def find_perpendicular(d1, d2, perp_length = 1, prev_v = [], next_v = [], ref_po
         x_shift2 = perp_length * np.cos(theta2)
         y_shift2 = perp_length * np.sin(theta2)
         d2_perp2 = np.array([d1_perp[0] + x_shift2, d1_perp[1]+ y_shift2])
-        options_last = [d2_perp1, d2_perp2]
-        
+        options_last = [d2_perp1, d2_perp2]        
         # Choose the option that goes outside
-        if len(prev_mid) > 0:
-            
+        if len(prev_mid) > 0:            
           
             if len(ref_point) > 0 and layer_num > 0:                               # here ref point is a point of a different dynamics layer from which we want to take distance
                 dist1 = np.sum((smooth_val - d2_perp1)**2)
@@ -1569,16 +1558,14 @@ def find_perpendicular(d1, d2, perp_length = 1, prev_v = [], next_v = [], ref_po
             else:
                 dist1 = np.sum((prev_mid - d2_perp1)**2)
                 dist2 = np.sum((prev_mid - d2_perp2)**2)
-                max_opt = np.argmin([dist1,dist2])  
-       
+                max_opt = np.argmin([dist1,dist2])       
                 
         else:
         
             if len(ref_point) > 0 and layer_num >0:                               # here ref point is a point of a different dynamics layer from which we want to take distance
                 dist1 = np.sum((ref_point - d2_perp1)**2)
                 dist2 = np.sum((ref_point - d2_perp2)**2)
-                max_opt = np.argmax([dist1, dist2])
-             
+                max_opt = np.argmax([dist1, dist2])             
             elif direction_initial == 'low':
                 max_opt = np.argmin([d2_perp1[1], d2_perp2[1]])
             elif direction_initial == 'high':
@@ -1586,9 +1573,7 @@ def find_perpendicular(d1, d2, perp_length = 1, prev_v = [], next_v = [], ref_po
             elif direction_initial == 'right' :
                 max_opt = np.argmax([d2_perp1[0], d2_perp2[0]])
             elif direction_initial == 'left':
-                max_opt = np.argmin([d2_perp1[0], d2_perp2[0]])
-
-                
+                max_opt = np.argmin([d2_perp1[0], d2_perp2[0]])                
             else:
                 raise NameError('Invalid direction initial value') 
     
@@ -1614,7 +1599,6 @@ def find_lows_high(coeff_row, latent_dyn,   choose_meth ='intersection',factor_p
             ref_shape_all = ref_point
         else:
             ref_shape_all = np.array([])
-
     else:
         ref_shape_all = np.array([])
     # Iterate over time
@@ -1628,22 +1612,15 @@ def find_lows_high(coeff_row, latent_dyn,   choose_meth ='intersection',factor_p
 
         if len(ref_shape_all) > 0 and ref_shape_all.shape[0] > t_num and layer_num > 0: # and ref_shape_all.shape[1] >1
             ref_point = ref_shape_all[t_num,:]
-
           
             if len(ref_point) >  0 and layer_num > 0 :  #and t_num  < 3
-                 pass
-          
+                 pass        
         
-        # if do not consider layer
-        
+        # if do not consider layer        
         elif t_num > 2 and (choose_meth == 'smooth' or choose_meth == 'intersection'):   
-            ref_point  = d2_perp
-
-          
+            ref_point  = d2_perp         
         else:              
-            ref_point = []       
-
-        
+            ref_point = []          
         if return_unchose:  d1_perp, d2_perp, d2_perp_unchosen = find_perpendicular(d1_coeff, d2_coeff,c_len**factor_power, prev_v = prev_v, next_v=next_v,ref_point  = ref_point , choose_meth = choose_meth, initial_point=initial_point, direction_initial =direction_initial, return_unchose = return_unchose,layer_num=layer_num)# c_len
         else:               d1_perp, d2_perp = find_perpendicular(d1_coeff, d2_coeff,c_len**factor_power, prev_v = prev_v, next_v=next_v,ref_point  = ref_point , choose_meth = choose_meth, initial_point=initial_point, direction_initial= direction_initial, return_unchose = return_unchose,layer_num=layer_num)# c_len
         # Add results to results lists
@@ -1721,6 +1698,28 @@ def plot_multi_colors(store_dict,min_time_plot = 0,max_time_plot = -100,  colors
 
 
 def remove_edges(ax, include_ticks = False, top = False, right = False, bottom = False, left = False):
+    """
+    Remove the specified edges (spines) of the plot and optionally the ticks of the plot.
+    
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The matplotlib axes object of the plot.
+    include_ticks : bool, optional
+        Whether to include the ticks, by default False.
+    top : bool, optional
+        Whether to remove the top edge, by default False.
+    right : bool, optional
+        Whether to remove the right edge, by default False.
+    bottom : bool, optional
+        Whether to remove the bottom edge, by default False.
+    left : bool, optional
+        Whether to remove the left edge, by default False.
+    
+    Returns
+    -------
+    None
+    """    
     ax.spines['top'].set_visible(top)    
     ax.spines['right'].set_visible(right)
     ax.spines['bottom'].set_visible(bottom)
@@ -1731,7 +1730,32 @@ def remove_edges(ax, include_ticks = False, top = False, right = False, bottom =
 
 def norm_coeffs(coefficients, type_norm, same_width = True,width_des = 0.7,factor_power = 0.9, min_width = 0.01):
     """
-    type_norm can be:      'sum_abs', 'norm','abs'
+    Normalize the coefficients according to the specified type of normalization.
+    
+    Parameters
+    ----------
+    coefficients : numpy.ndarray
+        The coefficients to be normalized.
+    type_norm : str
+        The type of normalization to be applied. Can be 'sum_abs', 'norm', 'abs' or 'no_norm'.
+    same_width : bool, optional
+        Whether to enforce the same width for all coefficients, by default True.
+    width_des : float, optional
+        The desired width, by default 0.7.
+    factor_power : float, optional
+        The power factor to apply, by default 0.9.
+    min_width : float, optional
+        The minimum width allowed, by default 0.01.
+    
+    Returns
+    -------
+    numpy.ndarray
+        The normalized coefficients.
+    
+    Raises
+    ------
+    NameError
+        If the `type_norm` value is not one of the allowed values ('sum_abs', 'norm', 'abs' or 'no_norm').
     """
     if type_norm == 'norm':
         coefficients_n =      norm_over_time(np.abs(coefficients), type_norm = 'normal')   
@@ -1742,7 +1766,7 @@ def norm_coeffs(coefficients, type_norm, same_width = True,width_des = 0.7,facto
         coefficients_n = np.abs(coefficients) / np.sum(np.abs(coefficients),1).reshape((-1,1))
     elif type_norm == 'abs':
         coefficients[np.abs(coefficients) < min_width] = min_width
-        coefficients_n = np.abs(coefficients) #/ np.sum(np.abs(coefficients),1).reshape((-1,1))
+        coefficients_n = np.abs(coefficients) 
     elif type_norm == 'no_norm':
         coefficients_n = coefficients
     else:
@@ -1756,9 +1780,37 @@ def norm_coeffs(coefficients, type_norm, same_width = True,width_des = 0.7,facto
     return coefficients_n
 
   
-def lists2list(xss)    :
+def lists2list(xss):
+    """
+    Flatten a list of lists into a single list.
+    
+    Parameters
+    ----------
+    xss : list of lists
+        The list of lists to be flattened.
+    
+    Returns
+    -------
+    list
+        The flattened list.
+    """
     return [x for xs in xss for x in xs] 
 
 def mean_change(signal, axis = 0):
+    """
+    Calculate the mean change of the signal along the specified axis.
+    
+    Parameters
+    ----------
+    signal : numpy.ndarray
+        The signal data.
+    axis : int, optional
+        The axis along which the mean change is calculated, by default 0.
+    
+    Returns
+    -------
+    numpy.ndarray
+        The mean change of the signal.
+    """     
     return np.mean(np.abs(np.diff(signal, axis = axis)), axis = axis)
     
