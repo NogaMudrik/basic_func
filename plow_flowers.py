@@ -302,16 +302,18 @@ def create_flower( stem_color = 'green', fig = [], ax = [],
     
 def create_flowers(num_flowers = 170, F_max = 500, F_min = 60,
     w_min = 0.002, w_max = 0.02, l_max = 0.4, l_min = 0.2, 
-    centers_min = -3, centers_max = 3, to_save = False):
+    centers_min = -3, centers_max = 3, to_save = False, centers = []):
     
-    centers_min = -int(num_flowers/11)
-    centers_min = int(num_flowers/11) 
-    
-    fig, ax = plt.subplots(figsize = (17,7))    
+    if checkEmptyList(centers):
+        centers_min = -int(num_flowers/11)
+        centers_min = int(num_flowers/11) 
+        centers = np.random.rand(num_flowers, 2 )*(- centers_min + centers_max) + centers_min
+        
+    fig, ax = plt.subplots(figsize = (17,5))    
     random_rb = np.random.rand( num_flowers, 2)*0.3
     greens = np.hstack([np.ones((num_flowers, 1)), random_rb])
     
-    centers = np.random.rand(num_flowers, 2 )*(- centers_min + centers_max) + centers_min
+    
     num_dots = np.random.choice(np.arange(F_min, F_max), size = num_flowers)
     ws = np.random.rand(num_flowers)*(w_min - w_max) + w_min 
     ls = np.random.rand(num_flowers)*(-l_min +  l_max) + l_min 
@@ -323,6 +325,7 @@ def create_flowers(num_flowers = 170, F_max = 500, F_min = 60,
     for flower in range(num_flowers):
         cur_stem_color = greens[flower, :]
         cur_center = centers[flower,:]
+
         w_current = ws[flower] 
         l = ls[flower]     
         cos_max_c = cos_max_cs[flower]
@@ -346,16 +349,81 @@ def create_flowers(num_flowers = 170, F_max = 500, F_min = 60,
     
     
     
+def create_text_to_image(string = 'BRING THEM HOME!'):    
+    fig, ax = plt.subplots(figsize = (15,1))
+    ax.text(0, 0, string, fontsize = 50)
+    ax.set_ylim([-0.1,0.1])
+    fig.tight_layout()
+    
+    remove_edges(ax)
+    plt.savefig('%s.png'%string, bbox_inches="tight")
+    
+import time    
+from PIL import Image    
+import os 
+
+def load_and_convert_to_bw(file_path):
+    # Open the image file
+    image = Image.open(file_path)
+
+    # Convert the image to grayscale
+    image_bw = image.convert('L')
+
+    # Convert the grayscale image to a NumPy array
+    image_array = np.array(image_bw)
+
+    return image_array
+    
+    
+def find_text_locs(string):
+    if not os.path.exists('%s.png'%string):
+        create_text_to_image(string = 'BRING THEM HOME!')
+        time.sleep(5)  # Pause for 5 seconds
+    img_array = load_and_convert_to_bw('%s.png'%string)
+    is_text = img_array < 250
+    #print(np.where(is_text))
+    text_rows, text_cols  = np.where(is_text) # np.unravel_index(np.where(is_text)[0], img_array.shape )
+    print((text_rows!=0).sum())
+    return text_rows, text_cols
     
     
     
+def flowers_by_text(string ='BRING THEM HOME', num_flowers = 630, F_max = 60, F_min = 20,
+    w_min = 0.002, w_max = 0.02, l_max = 0.4, l_min = 0.2, 
+    centers_min = -3, centers_max = 3, to_save = True, fac = 0.1):
+    max_flowers = num_flowers
+
+    text_rows, text_cols = find_text_locs(string)
+    text_rows = - text_rows
+    if len(text_rows) > max_flowers:
+        num_cur = len(text_rows)
+        num_new = np.random.choice( np.arange( num_cur),  max_flowers  ) #np.linspace(0, num_cur - 1, max_flowers ).astype(int)
+        print(num_new)
+        print(text_rows)
+        text_rows_new = text_rows[num_new]
+        #print(text_rows_new )
+        #print(5454)
+        #input('fjkfld?')
+        text_cols_new = text_cols[num_new]
+    else:
+        num_flowers = len(text_rows) 
     
-    
-    
+    fig, ax = plt.subplots(figsize = (17,5))
+    ax.scatter(text_cols ,text_rows )
+    ax.scatter(text_cols_new ,text_rows_new )
+    create_flowers(num_flowers, F_max, F_min ,
+        w_min, w_max, l_max, l_min, 
+        centers_min, centers_max, to_save, centers = np.vstack([text_cols_new ,text_rows_new ]).T*fac)
+
+
+
+
     
     
     
 to_run = False    
+
+
 if to_run:    
     
     
