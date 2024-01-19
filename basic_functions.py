@@ -87,7 +87,139 @@ def str_dict2dict(string):
     return {}
 
 
+def moving_avg_time(mat, wind = 4):
+  """
+  Compute the moving average over time for a matrix of spike times.
 
+  Parameters:
+  - mat (numpy.ndarray): Binary matrix representation of spike times.
+    Rows correspond to neurons, and columns correspond to time bins.
+  - wind (int): Size of the moving average window.
+
+  Returns:
+  - numpy.ndarray: Matrix of moving averages over time.
+    Rows correspond to neurons, and columns correspond to time bins.
+  """
+  T = mat.shape[1]
+  N = mat.shape[0]
+  mat = np.hstack([np.zeros((N, wind)), mat, np.zeros((N, wind))])
+  return   np.hstack([np.mean(mat[:,i : i + wind] , 1).reshape((-1,1)) for i in range(T)])
+
+
+def create_scatter_plot(list_times, fig=[], ax=[], res=0.2, to_plot=True, max_time=500, max_neuron=5):
+    """
+    Create a scatter plot or matrix representation for a list of neuron spike times.
+
+    Parameters:
+    - list_times (list of arrays): List containing arrays of spike times for each neuron.
+    - fig (matplotlib.figure.Figure): Existing figure to use (optional).
+    - ax (matplotlib.axes._subplots.AxesSubplot): Existing axes to use (optional).
+    - res (float): Resolution for binning spike times.
+    - to_plot (bool): If True, generate and display the scatter plot or matrix; if False, only compute the matrix.
+    - max_time (int): Maximum time limit for plotting and matrix computation.
+    - max_neuron (int): Maximum number of neurons to include in the analysis.
+
+    Returns:
+    - mat (numpy.ndarray): Binary matrix representation of spike times for neurons.
+      Rows correspond to neurons, and columns correspond to time bins.
+      If 'to_plot' is True, also returns the generated or existing figure and axes.
+    """
+    list_times = list_times[:max_neuron]
+
+    # Compute minimum and maximum spike times across neurons
+    min_val = np.min([np.min(el) for el in list_times if len(el) > 0])
+    max_val = np.max([np.max(el) for el in list_times if len(el) > 0])
+
+    # Create figure and axes if not provided and to_plot is True
+    if checkEmptyList(ax) and to_plot:
+        fig, ax = plt.subplots()
+
+    # Compute the duration based on resolution and limit to max_time
+    dur = int(np.ceil((max_val - min_val) / res)) + 1
+    dur = np.min([max_time, dur])
+
+    # Initialize the binary matrix for spike times
+    mat = np.zeros((len(list_times), dur))
+
+    # Populate the binary matrix with spike times
+    for neuron_c, neuron in enumerate(list_times):
+        times = ((neuron - min_val) / res).astype(int)
+        times = times[times < max_time]
+        mat[neuron_c, times] = 1
+
+    # Generate and display the scatter plot or matrix if to_plot is True
+    if to_plot:
+        sns.heatmap(mat, ax=ax)
+
+    return mat if not to_plot else (mat, fig, ax)
+
+
+
+  
+def pad_mat(mat, pad_val, size_each = 1, axis = 1):
+    if axis == 1:
+        each_pad = np.ones((mat.shape[0], size_each))*pad_val
+        mat = np.hstack([each_pad, mat, each_pad])
+    else:
+        each_pad = np.ones((size_each, mat.shape[1]))*pad_val
+        mat = np.vstack([each_pad, mat, each_pad])        
+    return mat
+
+
+def gaussian_convolve(mat, wind = 10, direction = 1, sigma = 1, norm_sum = True, plot_gaussian = False):
+    """
+    Convolve a 2D matrix with a Gaussian kernel along the specified direction.
+    
+    Parameters:
+        mat (numpy.ndarray): The 2D input matrix to be convolved with the Gaussian kernel.
+        wind (int, optional): The half-size of the Gaussian kernel window. Default is 10.
+        direction (int, optional): The direction of convolution. 
+            1 for horizontal (along columns), 0 for vertical (along rows). Default is 1.
+        sigma (float, optional): The standard deviation of the Gaussian kernel. Default is 1.
+    
+    Returns:
+        numpy.ndarray: The convolved 2D matrix with the same shape as the input 'mat'.
+        
+    Raises:
+        ValueError: If 'direction' is not 0 or 1.
+    """
+    if direction == 1:
+        gaussian = gaussian_array(2*wind,sigma)
+        if norm_sum:
+            gaussian = gaussian / np.sum(gaussian)
+        if plot_gaussian:
+            plt.figure(); plt.plot(gaussian)
+        mat_shape = mat.shape[1]
+        T_or = mat.shape[1]
+        mat = pad_mat(mat, np.nan, wind)
+        return np.vstack( [[ np.nansum(mat[row, t:t+2*wind]*gaussian)                    
+                     for t in range(T_or)] 
+                   for row in range(mat.shape[0])])
+    elif direction == 0:
+        return gaussian_convolve(mat.T, wind, direction = 1, sigma = sigma).T
+    else:
+        raise ValueError('invalid direction')
+
+
+def gaussian_array(length,sigma = 1  ):
+    """
+    Generate an array of Gaussian values with a given length and standard deviation.
+    
+    Args:
+        length (int): The length of the array.
+        sigma (float, optional): The standard deviation of the Gaussian distribution. Default is 1.
+    
+    Returns:
+        ndarray: The array of Gaussian values.
+    """
+    x = np.linspace(-3, 3, length)  # Adjust the range if needed
+    gaussian = np.exp(-(x ** 2) / (2 * sigma ** 2))
+    normalized_gaussian = gaussian / np.max(gaussian)
+    return normalized_gaussian
+    
+    
+
+                 
 def create_3d_ax(num_rows, num_cols, params = {}):
     """
     Create a 3D subplot grid.
