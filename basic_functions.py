@@ -29,9 +29,9 @@ from pathlib import Path
 import os
 from tkinter.filedialog import askopenfilename
 from datetime import date
-import dill   
+#import dill   
 import scipy.io
-import mat73
+#import mat73
 import warnings
 import statsmodels as stats
 from importlib import reload  
@@ -40,10 +40,13 @@ sep = os.sep
 from IPython.core.display import display, HTML
 from importlib import reload  
 from scipy.interpolate import interp1d
-from colormap import rgb2hex
+#from colormap import rgb2hex
 from scipy import interpolate
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-import pylops
+try:
+    import pylops
+except:
+    print('did not load pylops')
 from statistics import mode
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
@@ -54,8 +57,40 @@ from sklearn.model_selection import train_test_split
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
+import seaborn as sns
+
+sns.set_context('talk')
+"""
+parameters
+"""
+labelpad = 10
+
+def str_dict2dict(string):
+  string_val = string.replace('"','')
+  sub_vals = string_val.replace('{','').replace('}','').split(',')
+  sub_sub_vals = [val.split(':') for val in sub_vals]
+  #print(sub_sub_vals)
+  if np.array([len(el) == 2 for el in sub_sub_vals]).all():
+    dict_return  = {val[0].strip():val[1].strip() for val in sub_sub_vals}
+    return dict_return
+  else:
+    return {}
 
 
+
+def create_3d_ax(num_rows, num_cols, params = {}):
+    fig, ax = plt.subplots(num_rows, num_cols, subplot_kw = {'projection': '3d'}, **params)
+    return  fig, ax
+
+
+def plot_3d(mat, params_fig = {}, fig = [], ax = [], params_plot = {}, type_plot = 'plot'):
+    #
+    if checkEmptyList(ax):
+        fig, ax = create_3d_ax(1,1, params_fig)
+    if type_plot == 'plot':
+        ax.plot(mat[0], mat[1], mat[2], **params_plot)
+    else:
+        ax.scatter(mat[0], mat[1], mat[2], **params_plot)
 
 def init_mat(size_mat, r_seed = 0, dist_type = 'norm', init_params = {'loc':0,'scale':1}, normalize = False):
   """
