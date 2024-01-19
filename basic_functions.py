@@ -66,6 +66,16 @@ parameters
 labelpad = 10
 
 def str_dict2dict(string):
+  """
+  Convert a string representation of a dictionary to a Python dictionary.
+
+  Parameters:
+  - string (str): String representation of a dictionary.
+
+  Returns:
+  - dict: The resulting Python dictionary.
+    If the input string is not a valid representation of a dictionary, an empty dictionary is returned.
+  """
   string_val = string.replace('"','')
   sub_vals = string_val.replace('{','').replace('}','').split(',')
   sub_sub_vals = [val.split(':') for val in sub_vals]
@@ -79,12 +89,38 @@ def str_dict2dict(string):
 
 
 def create_3d_ax(num_rows, num_cols, params = {}):
+    """
+    Create a 3D subplot grid.
+    
+    Parameters:
+    - num_rows (int): Number of rows in the subplot grid.
+    - num_cols (int): Number of columns in the subplot grid.
+    - params (dict): Additional parameters to pass to plt.subplots.
+    
+    Returns:
+    - fig (matplotlib.figure.Figure): The created figure.
+    - ax (numpy.ndarray): The created 3D subplot axes.
+    """
     fig, ax = plt.subplots(num_rows, num_cols, subplot_kw = {'projection': '3d'}, **params)
     return  fig, ax
 
 
 def plot_3d(mat, params_fig = {}, fig = [], ax = [], params_plot = {}, type_plot = 'plot'):
-    #
+    """
+    Plot 3D data.
+
+    Parameters:
+    - mat (numpy.ndarray): 3D data to be plotted.
+    - params_fig (dict): Additional parameters for creating the figure.
+    - fig (matplotlib.figure.Figure): Existing figure to use (optional).
+    - ax (numpy.ndarray): Existing 3D subplot axes to use (optional).
+    - params_plot (dict): Additional parameters for the plot.
+    - type_plot (str): Type of 3D plot ('plot' for line plot, 'scatter' for scatter plot).
+
+    Returns:
+    - fig (matplotlib.figure.Figure): The created or existing figure.
+    - ax (numpy.ndarray): The created or existing 3D subplot axes.
+    """
     if checkEmptyList(ax):
         fig, ax = create_3d_ax(1,1, params_fig)
     if type_plot == 'plot':
