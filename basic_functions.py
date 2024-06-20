@@ -65,6 +65,86 @@ parameters
 """
 labelpad = 10
 
+def create_legend(dict_legend, size = 30, save_formats = ['.png','.svg'], 
+                  save_addi = 'legend' , dict_legend_marker = {}, 
+                  marker = '.', style = 'plot', s = 500, to_save = True, plot_params = {'lw':5},
+                  save_path = os.getcwd(), params_leg = {}):
+    fig, ax = plt.subplots()
+    if style == 'plot':
+        [ax.plot([],[], 
+                 c = dict_legend[area], label = area, marker = dict_legend_marker.get(area), **plot_params) for area in dict_legend]
+    else:
+        if len(dict_legend_marker) == 0:
+            [ax.scatter([],[], s=s,c = dict_legend.get(area), label = area, marker = marker, **plot_params) for area in dict_legend]
+        else:
+            [ax.scatter([],[], s=s,c = dict_legend[area], label = area, marker = dict_legend_marker.get(area), **plot_params) for area in dict_legend]
+    ax.legend(prop = {'size':size},**params_leg)
+    remove_edges(ax, left = False, bottom = False, include_ticks = False)
+    fig.tight_layout()
+    if to_save:
+        [fig.savefig(save_path + os.sep + 'legend_areas_%s%s'%(save_addi,type_save)) 
+         for type_save in save_formats]
+        
+        
+        
+        
+        
+        
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+
+
+
+        
+        
+        
+def gaussian_convolve(mat, wind = 10, direction = 1, sigma = 1, norm_sum = True, plot_gaussian = False):
+    """
+    Convolve a 2D matrix with a Gaussian kernel along the specified direction.
+
+    Parameters:
+        mat (numpy.ndarray): The 2D input matrix to be convolved with the Gaussian kernel.
+        wind (int, optional): The half-size of the Gaussian kernel window. Default is 10.
+        direction (int, optional): The direction of convolution. 
+            1 for horizontal (along columns), 0 for vertical (along rows). Default is 1.
+        sigma (float, optional): The standard deviation of the Gaussian kernel. Default is 1.
+
+    Returns:
+        numpy.ndarray: The convolved 2D matrix with the same shape as the input 'mat'.
+
+    Raises:
+        ValueError: If 'direction' is not 0 or 1.
+    """
+    if direction == 1:
+        gaussian = gaussian_array(2*wind,sigma)
+        if norm_sum:
+            gaussian = gaussian / np.sum(gaussian)
+        if plot_gaussian:
+            plt.figure(); plt.plot(gaussian)
+        mat_shape = mat.shape[1]
+        T_or = mat.shape[1]
+        mat = pad_mat(mat, np.nan, wind)
+        return np.vstack( [[ np.nansum(mat[row, t:t+2*wind]*gaussian)                    
+                     for t in range(T_or)] 
+                   for row in range(mat.shape[0])])
+    elif direction == 0:
+        return gaussian_convolve(mat.T, wind, direction = 1, sigma = sigma).T
+    else:
+        raise ValueError('invalid direction')
+        
+def create_simple_cbar(vmin = 0, vmax = 1, cmap = 'Reds', to_return = False, center = None, cbar_kws = {}, aspect = 10):
+    fig, axs = plt.subplots()
+    sns.heatmap(np.random.rand(3,3)*np.nan, vmin = vmin, vmax = vmax , cmap = cmap, center = center, cbar_kws=cbar_kws, ax = axs)
+    # Adjust the width of the colorbar
+    cbar = axs.collections[0].colorbar
+    cbar.ax.set_aspect(aspect)
+    remove_edges(axs, left = False, bottom = False, include_ticks = False)
+    if to_return:
+        return fig
+    
+
+        
 def str_dict2dict(string):
   """
   Convert a string representation of a dictionary to a Python dictionary.
@@ -1475,7 +1555,7 @@ def find_closest(vec1, vec2, metric = 'mse'):
     else:
         raise ValueError('undefined metric!')
 
-def create_colors(len_colors, perm = [0,1,2]):
+def create_colors(len_colors, perm = [0,1,2], cmap = ''):
     """
     Create a set of discrete colors with a one-directional order
     Input: 
@@ -1483,11 +1563,108 @@ def create_colors(len_colors, perm = [0,1,2]):
     Output:
         3 X len_colors matrix decpiting the colors in the cols
     """
-    colors = np.vstack([np.linspace(0,1,len_colors),(1-np.linspace(0,1,len_colors))**2,1-np.linspace(0,1,len_colors)])
-    colors = colors[perm, :]
+    if len(cmap) == 0:
+        colors = np.vstack([np.linspace(0,1,len_colors),(1-np.linspace(0,1,len_colors))**2,1-np.linspace(0,1,len_colors)])
+        colors = colors[perm, :]
+    else:
+        # Specify the number of colors you want
+        n = len_colors
+
+        # Generate n evenly spaced values from 0 to 1
+        colors = np.linspace(0, 0.9, n+1)
+
+        # Get the 'hsv' colormap
+        hsv = cm.get_cmap(cmap, n+1)
+
+        # Map the color indices to the colormap
+        color_list = hsv(colors)
+        colors = color_list[:-1]
+        # Printing or returning the colors
+        #print(color_list)
+                
+        #hhhhhhhhhhh
     return colors
 
+def my_isin(vec, vec_edges = [], return_style = 'all', val_nonzero = 1, num_point = 8, allow_part_time = False):    
+    """
+    Determine the positions of firings within specified edges and return the result in different formats.
 
+    Parameters:
+    vec : array-like
+        The times of firing.
+    vec_edges : array-like, optional
+        Either a list of lists (with 2 elements in each sub-list), an N x 2 vector, or a 1D vector of edges.
+    return_style : str, optional
+        The style of return value. Options are 'locs' (default), 'array', or 'all'.
+    val_nonzero : int, optional
+        The value to mark non-zero positions in the return array. Default is 1.
+    num_point : int, optional
+        The number of points to generate edges if vec_edges is not provided. Default is 8.
+    allow_part_time : bool, optional
+        If False, raises an error if vec contains values outside the range of vec_edges. Default is False.
+
+    Returns:
+    If return_style is 'locs':
+        locs : numpy.ndarray
+            The locations of firings within the edges.
+    If return_style is 'array':
+        ar : numpy.ndarray
+            An array with non-zero values at firing positions.
+    If return_style is 'all':
+        locs : numpy.ndarray
+            The locations of firings within the edges.
+        ar : numpy.ndarray
+            An array with non-zero values at firing positions.
+        vec_edges : numpy.ndarray
+            The edges used for determining the positions.
+
+    Raises:
+    ValueError
+        If there are more values in vec than in vec_edges and allow_part_time is False.
+
+    Examples:
+    >>> vec = np.array([2.54345, 3.434534, 6.54354353])
+    >>> my_isin(vec)
+    array([0, 1, 0, 0, 0, 1, 0, 0])
+    """
+    if not isinstance(vec, np.ndarray):
+        vec = np.array(vec)
+        
+    if checkEmptyList(vec_edges):
+        # create edges   
+        
+        vec_edges = np.linspace(vec.min(), vec.max() , num_point)
+        if len(vec_edges) == 0:
+            print('resolution to coarse')
+            
+    if (isinstance(vec_edges, np.ndarray) and vec_edges.ndim == 1) or (vec_edges.ndim == 2 and (1 in vec_edges.shape)):
+
+        vec_edges = np.hstack([vec_edges[:-1].reshape((-1,1)) , vec_edges[1:].reshape((-1,1)) ])    
+   
+    if not isinstance(vec_edges, np.ndarray) or  (isinstance(vec_edges, np.ndarray) and vec_edges.ndim == 1):
+        vec_edges = np.vstack(vec_edges)
+        
+    if vec.max() > vec_edges.max() and not allow_part_time:
+        raise ValueError('more values in edges then in vec_edges')
+   
+    ar = np.vstack([(vec_i > vec_edges[:,0]) & (vec_i <= vec_edges[:,1]) for vec_i in vec]).sum(0)
+    locs =  np.where(ar !=0)[0]
+    if return_style == 'locs':
+        return locs
+    else:
+       
+        if return_style == 'array':            
+            return ar
+        
+        elif return_style == 'all':
+            return locs, ar, vec_edges
+        
+        else:
+            raise ValueError('undefined return style')
+        
+        
+        
+        
 def relative_eror(reco,real, return_mean = True, func = np.nanmean):
     """
     Calculate the relative reconstruction error
