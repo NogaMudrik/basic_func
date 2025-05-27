@@ -10,7 +10,10 @@ Created on Wed Feb  1 04:06:34 2023
 Imports
 """
 import matplotlib
-from webcolors import name_to_rgb
+try:
+    from webcolors import name_to_rgb
+except:
+    pass
 import numpy as np
 from scipy import linalg
 import matplotlib.pyplot as plt
@@ -59,31 +62,314 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 import seaborn as sns
 
+
+
+
+from datetime import datetime as datetime2
+
+
+
 sns.set_context('talk')
+
+global ss, today, full_date
+
+
+
+
+
+full_date = str(datetime2.now())
+ss = int(str(datetime2.now()).split('.')[-1])
+full_date = full_date.replace('-','_').replace(':', '_').replace('.','_')
+today = full_date.split()[0]
+
+
 """
 parameters
 """
 labelpad = 10
 
+labels_sizes = {'title_size': 40, 'xlabel_size': 20,   'ylabel_size': 20    }
+label_params = { 'title_params': {'fontsize': labels_sizes.get('title_size', 20)}, 
+                'xlabel_params': {'fontsize':  labels_sizes.get('title_size', 20)}, 
+                'ylabel_params': {'fontsize':  labels_sizes.get('title_size', 20)}}
+
+from scipy.ndimage import gaussian_filter1d
+def calculate_speed_from_pos_vector(pos_x, params={}):
+    # Get the Gaussian kernel standard deviation (sigma) from params, or use default value 1.0
+    params['sigma'] = params.get('sigma',0.1)
+    sigma = params['sigma']
+    
+    # Apply Gaussian smoothing with the specified sigma
+    smoothed_pos_x = gaussian_filter1d(pos_x, sigma)
+    # Calculate speed as the difference between consecutive smoothed positions
+    speed = np.diff(smoothed_pos_x)
+    
+    return speed
+
+
+import json
+# def update_nested_dict(d, path, value):
+#     # Traverse the dictionary based on the path
+#     for key in path[:-1]:
+#         d = d.setdefault(key, {})  # Move deeper into the dictionary
+#     d[path[-1]] = value  # Set the value at the last key in the path
+def open_json_file_utf_8(file_name):
+    # Specify the UTF-8 encoding to read the file
+    #r"E:\ALL_PHD_MATERIALS\CODES\multi-SiBBlInGS\wikipage_views\CS_education\desktop_spider\langviews-20201009-20241029.json"
+    with open(file_name, "r", encoding="utf-8") as file:
+        data = json.load(file)
+    return data
+
+
+
+from scipy.interpolate import interp1d
+
+def interp_over_time(data, params=None):
+    if params is None:
+        params = {}
+    N, T, p = data.shape
+    t = np.arange(T)
+    out = np.empty_like(data)
+    for i in range(N):
+        for j in range(p):
+            ts = data[i, :, j]
+            mask = ~np.isnan(ts)
+            if np.count_nonzero(mask) < 2:
+                out[i, :, j] = ts
+            else:
+                f = interp1d(t[mask], ts[mask], **params)
+                out[i, :, j] = f(t)
+    return out
+
+
+
+    
+def array_split_by_duration(ar, durations):
+    """
+    Splits an array into multiple parts based on specified durations.
+
+    Parameters:
+    -----------
+    ar : array-like
+        The array to be split.
+    durations : int, list, tuple, or numpy.ndarray
+        Specifies the number of elements in each part:
+        - If an integer, the array is divided into equal-sized parts with this length.
+        - If a list, tuple, or numpy array, each value represents the size of the corresponding part.
+
+    Returns:
+    --------
+    list
+        A list of subarrays, where each subarray contains elements from the input array based on the specified durations.
+
+    Raises:
+    -------
+    AssertionError
+        If the sum of `durations` does not equal the length of the input array.
+
+    Examples:
+    ---------
+    >>> import numpy as np
+    >>> ar = np.arange(10)
+    >>> array_split_by_duration(ar, [3, 4, 3])
+    [array([0, 1, 2]), array([3, 4, 5, 6]), array([7, 8, 9])]
+
+    >>> array_split_by_duration(ar, 2)
+    [array([0, 1]), array([2, 3]), array([4, 5]), array([6, 7]), array([8, 9])]
+    """    
+    if not isinstance(durations, (list, tuple, np.ndarray)):
+        durations = [durations]*int(len(ar)/durations)
+    assert sum(durations) == len(ar), 'sum durations must be equal to length of array but %d vs. %d'%(sum(durations) , len(ar))
+    cumsum_durations = np.cumsum([0] + list(durations))
+    return [ar[el:el2] for el, el2 in zip(cumsum_durations[:-1], cumsum_durations[1:])]
+    
+
+
+    
+def string_to_dict(string):
+    try:
+        data = json.loads(string)
+        # Check if the result is a list of dictionaries and return the first one
+        if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+            return data[0]
+        elif isinstance(data, dict):
+            return data
+    except json.JSONDecodeError:
+        pass  # Handle error if needed
+    return None  # Return None if conversion fails
+
+    
+def load_mat_file(mat_name , mat_path = '',sep = sep, squeeze_me = True,simplify_cells = True):
+    """
+    Function to load mat files. Useful for uploading the c. elegans data. 
+    Example:
+        load_mat_file('WT_Stim.mat','E:/CoDyS-Python-rep-/other_models')
+    """
+    if mat_path == '':
+        data_dict = sio.loadmat(mat_name, squeeze_me = squeeze_me,simplify_cells = simplify_cells)
+    else:
+        data_dict = sio.loadmat(mat_path+sep+mat_name, squeeze_me = True,simplify_cells = simplify_cells)
+    return data_dict   
+def check_if_labels_batches(labels):
+    """
+    Check if labels are ordered in batches. 
+    Checks if the labels form valid batches where no label repeats within a batch.
+
+    This function iterates through pairs of consecutive labels to ensure that no label
+    is repeated within a batch. It assumes that the input is a sequence where each
+    batch consists of consecutive labels and a valid batch is one where no label 
+    appears more than once.
+
+    Parameters:
+    labels (list or array-like): A list or array of labels to check for valid batching.
+
+    Returns:
+    bool: True if each batch of labels contains unique labels, False otherwise.
+
+    Example:
+    >>> check_if_labels_batches(['a', 'b',  'c'])
+    True
+    >>> check_if_labels_batches(['a', 'b', 'a', 'b'])
+    False
+    """
+    labels_visited = []
+    for label1, label2 in zip(labels[:-1], labels[1:]):
+        if label1 != label2:
+            labels_visited.append(label1)
+        if label2 in labels_visited:
+            return False
+    return True
+
+def plot_3d(mat, params_fig = {}, fig = [], ax = [], params_plot = {}, type_plot = 'plot', to_return = False):
+    """
+    Plot 3D data.
+
+    Parameters:
+    - mat (numpy.ndarray): 3D data to be plotted.
+    - params_fig (dict): Additional parameters for creating the figure.
+    - fig (matplotlib.figure.Figure): Existing figure to use (optional).
+    - ax (numpy.ndarray): Existing 3D subplot axes to use (optional).
+    - params_plot (dict): Additional parameters for the plot.
+    - type_plot (str): Type of 3D plot ('plot' for line plot, 'scatter' for scatter plot).
+
+    Returns:
+    - fig (matplotlib.figure.Figure): The created or existing figure.
+    - ax (numpy.ndarray): The created or existing 3D subplot axes.
+    """ 
+    if checkEmptyList(ax):
+        fig, ax = create_3d_ax(1,1, params_fig)
+    if type_plot == 'plot':    
+        scatter = ax.plot(mat[0], mat[1], mat[2], **params_plot)
+    else:
+        scatter = ax.scatter(mat[0], mat[1], mat[2], **params_plot)
+    if to_return:
+        return scatter
+    
+# def plot_3d(mat, params_fig = {}, fig = [], ax = [], params_plot = {}, type_plot = 'plot', to_return = False):
+#     # 
+#     if checkEmptyList(ax):
+#         fig, ax = create_3d_ax(1,1, params_fig)
+#     if type_plot == 'plot':    
+#         scatter = ax.plot(mat[0], mat[1], mat[2], **params_plot)
+#     else:
+#         scatter = ax.scatter(mat[0], mat[1], mat[2], **params_plot)
+#     if to_return:
+#         return scatter
+    
+
+# def plot_3d(mat, params_fig = {}, fig = [], ax = [], params_plot = {}, type_plot = 'plot'):
+#     """
+#     Plot 3D data.
+
+#     Parameters:
+#     - mat (numpy.ndarray): 3D data to be plotted.
+#     - params_fig (dict): Additional parameters for creating the figure.
+#     - fig (matplotlib.figure.Figure): Existing figure to use (optional).
+#     - ax (numpy.ndarray): Existing 3D subplot axes to use (optional).
+#     - params_plot (dict): Additional parameters for the plot.
+#     - type_plot (str): Type of 3D plot ('plot' for line plot, 'scatter' for scatter plot).
+
+#     Returns:
+#     - fig (matplotlib.figure.Figure): The created or existing figure.
+#     - ax (numpy.ndarray): The created or existing 3D subplot axes.
+#     """
+#     if checkEmptyList(ax):
+#         fig, ax = create_3d_ax(1,1, params_fig)
+#     if type_plot == 'plot':
+#         ax.plot(mat[0], mat[1], mat[2], **params_plot)
+#     else:
+#         ax.scatter(mat[0], mat[1], mat[2], **params_plot)
+        
+def make_labels_unique_order(labels):
+    """
+    Returns an array of unique labels, preserving their original order.
+
+    Parameters:
+    labels (list or array-like): A list or array of labels which may contain duplicates.
+
+    Returns:
+    np.array: A numpy array containing the unique labels in the order they first appear.
+    
+    Example:
+    >>> make_labels_unique_order(['a', 'b', 'a', 'c'])
+    array(['a', 'b', 'c'], dtype='<U1')
+    """    
+    labels_visited = []
+    for label in labels:
+        if label not in labels_visited:
+            labels_visited.append(label)
+    return np.array(labels_visited)    
+
+
 def create_legend(dict_legend, size = 30, save_formats = ['.png','.svg'], 
                   save_addi = 'legend' , dict_legend_marker = {}, 
-                  marker = '.', style = 'plot', s = 500, to_save = True, plot_params = {'lw':5},
-                  save_path = os.getcwd(), params_leg = {}):
-    fig, ax = plt.subplots()
+                  marker = '.', style = 'plot', s = 500, to_save = True, plot_params = {'lw':10}, to_sort_keys = False,
+                  save_path = os.getcwd(), params_leg = {}, fig = [], ax = [], figsize = None, to_remove_edges =  True,
+                  transparent = True,
+                  dict_legend_keys = []):
+    
+    if len(dict_legend_keys) == 0:
+        dict_legend_keys = list(dict_legend.keys())
+    if to_sort_keys:
+        dict_legend_keys = np.sort(dict_legend_keys)
+        
+    assert np.array([el in dict_legend for el in dict_legend_keys]).all(), 'pay attention! some elemenets you provided in dict_legend_keys do not exist in dict_legend!'
+    if set(dict_legend_keys) != set(list(dict_legend.keys())): print('pay attention! not all keys of dict_legend exist in dict_legend_keys!')
+    
+    
+    if not isinstance(figsize,tuple) and not figsize:
+        width = np.max([len(str(el)) for el in dict_legend_keys])
+        length = len( dict_legend_keys)
+        figsize = (3+(width*size/100)*params_leg.get('ncol', 1) ,3+(length*size/60)/params_leg.get('ncol', 1))
+        
+    if checkEmptyList(fig) and checkEmptyList(ax):
+        fig, ax = plt.subplots(figsize = figsize)    
+    else:
+        to_remove_edges = False
+    
+        
+    if checkEmptyList(fig) != checkEmptyList(ax):    
+        raise ValueError('??')
+    
     if style == 'plot':
         [ax.plot([],[], 
-                 c = dict_legend[area], label = area, marker = dict_legend_marker.get(area), **plot_params) for area in dict_legend]
+                 c = dict_legend[area], label = area, marker = dict_legend_marker.get(area), **plot_params) for area in dict_legend_keys]
     else:
         if len(dict_legend_marker) == 0:
-            [ax.scatter([],[], s=s,c = dict_legend.get(area), label = area, marker = marker, **plot_params) for area in dict_legend]
+            [ax.scatter([],[], s=s,c = dict_legend.get(area), label = area, marker = marker, **plot_params) for area in dict_legend_keys]
         else:
-            [ax.scatter([],[], s=s,c = dict_legend[area], label = area, marker = dict_legend_marker.get(area), **plot_params) for area in dict_legend]
+            [ax.scatter([],[], s=s,c = dict_legend[area], label = area, marker = dict_legend_marker.get(area), **plot_params) for area in dict_legend_keys]
     ax.legend(prop = {'size':size},**params_leg)
-    remove_edges(ax, left = False, bottom = False, include_ticks = False)
+    
+    if to_remove_edges :
+        remove_edges(ax, left = False, bottom = False, include_ticks = False)
     fig.tight_layout()
+    
     if to_save:
-        [fig.savefig(save_path + os.sep + 'legend_areas_%s%s'%(save_addi,type_save)) 
+        
+        [fig.savefig(save_path + os.sep + 'legend_areas_%s%s'%(save_addi,type_save), transparent=transparent) 
          for type_save in save_formats]
+        print('legend saved in %s'%(save_path + os.sep + 'legend_areas_%s.png'%(save_addi)))
         
         
         
@@ -99,6 +385,7 @@ import matplotlib.cm as cm
         
         
         
+
 def gaussian_convolve(mat, wind = 10, direction = 1, sigma = 1, norm_sum = True, plot_gaussian = False):
     """
     Convolve a 2D matrix with a Gaussian kernel along the specified direction.
@@ -131,19 +418,142 @@ def gaussian_convolve(mat, wind = 10, direction = 1, sigma = 1, norm_sum = True,
     elif direction == 0:
         return gaussian_convolve(mat.T, wind, direction = 1, sigma = sigma).T
     else:
-        raise ValueError('invalid direction')
+        raise ValueError('invalid direction')    
         
-def create_simple_cbar(vmin = 0, vmax = 1, cmap = 'Reds', to_return = False, center = None, cbar_kws = {}, aspect = 10):
-    fig, axs = plt.subplots()
+# def create_simple_cbar(vmin = 0, vmax = 1, cmap ='viridis', 
+#                        to_return = False, center = None, 
+#                        cbar_kws = {}, aspect = 10, remove_ticks = False,
+#                        to_save = False, save_path = os.getcwd(), 
+#                        save_name = 'cbar'):
+#     fig, axs = plt.subplots()
+#     sns.heatmap(np.random.rand(3,3)*np.nan, vmin = vmin, vmax = vmax , cmap = cmap, center = center, cbar_kws=cbar_kws, ax = axs)
+#     # Adjust the width of the colorbar
+#     cbar = axs.collections[0].colorbar
+#     if aspect:
+#         cbar.ax.set_aspect(aspect)
+#     remove_edges(axs, left = False, bottom = False, include_ticks = False)
+#     if remove_ticks:
+#         cbar.ax.tick_params(labelsize=0)  # Hide tick labels
+#         cbar.ax.xaxis.set_ticks([])  # Remove x-axis ticks
+#         cbar.ax.yaxis.set_ticks([])  # Remove y-axis ticks
+#     if to_save:
+#         save_fig(save_name, fig, save_path)
+#     if to_return:
+#         return fig
+    
+    
+
+def create_simple_cbar(vmin = 0, vmax = 1, cmap = 'Reds', to_return = False,
+                       center = None, cbar_kws = {}, aspect = 10, remove_ticks = False, with_edge = False,
+                       fig = [], axs = [], save_path = os.getcwd(), to_save = False, save_addi = 'cbar'):
+    if checkEmptyList(axs) and checkEmptyList(fig):
+        fig, axs = plt.subplots()
     sns.heatmap(np.random.rand(3,3)*np.nan, vmin = vmin, vmax = vmax , cmap = cmap, center = center, cbar_kws=cbar_kws, ax = axs)
     # Adjust the width of the colorbar
     cbar = axs.collections[0].colorbar
-    cbar.ax.set_aspect(aspect)
-    remove_edges(axs, left = False, bottom = False, include_ticks = False)
+    if aspect:
+        cbar.ax.set_aspect(aspect)
+    #cbar.ax.set_linewidth(2)
+    
+    #cbar.outline.set_edgecolor('black')  # This is the correct way to set edge color
+    #cbar.outline.set_linewidth(1)  # Optionally set the edge width
+    if with_edge:
+        cbar.ax.spines['top'].set_visible(True)    
+        cbar.ax.spines['right'].set_visible(True)
+        cbar.ax.spines['bottom'].set_visible(True)
+        cbar.ax.spines['left'].set_visible(True) 
+
+    remove_edges(axs, left = False, 
+                 bottom = False, include_ticks = False)
+    if remove_ticks:
+        cbar.ax.tick_params(labelsize=0)  # Hide tick labels
+        cbar.ax.xaxis.set_ticks([])  # Remove x-axis ticks
+        cbar.ax.yaxis.set_ticks([])  # Remove y-axis ticks
+        
+    if  with_edge:
+        # Set colorbar edge color to black
+        cbar.ax.spines['top'].set_edgecolor('black')
+        cbar.ax.spines['bottom'].set_edgecolor('black')
+        cbar.ax.spines['left'].set_edgecolor('black')
+        cbar.ax.spines['right'].set_edgecolor('black')
+        
+    if to_save:
+        save_fig(save_addi, fig, save_path =  save_path)
+        
+        
     if to_return:
         return fig
+        
     
+# from SLDS to dLDS
+def from_SLDS_z_to_dLDS_c(zs, k):
+  # $k$ is the number of sub-dynamics
+  # let's assume zs is a list
+  # k is the number of discrete states. 
+  # first we want to make sure that the states start from 0 and do not skip
+  unique_zs = np.unique(zs)
+  if len(unique_zs) > k or max(unique_zs) > k - 1:
+    raise ValueError('you received more unique discrete states than defined')
+  
+  arange_states = np.arange(unique_zs.max()+1)
 
+  T = len( zs )
+  cs = np.zeros((k, T))
+
+  for t in range(T): #ar_z in arange_states:
+    cur_z = zs[t]
+    cs[:, t] = 1*(arange_states == cur_z)
+
+  return cs  
+
+
+from scipy.optimize import linear_sum_assignment
+def permute_matrix_to_match(target_matrix, source_matrix):
+    """
+    Permutes the rows of source_matrix to match target_matrix based on correlation cost.
+
+    Parameters:
+    target_matrix (np.ndarray): The target matrix to match.
+    source_matrix (np.ndarray): The matrix whose rows are to be permuted.
+
+    Returns:
+    np.ndarray: Permuted source_matrix.
+    """
+    # Compute the correlation matrix (correlation between rows)
+    #correlation_matrix = np.corrcoef(target_matrix.T, source_matrix.T) #, rowvar=False)[:target_matrix.shape[0], target_matrix.shape[0]:]
+    cost_matrix =np.vstack([[((target_matrix[row] - source_matrix[row2])**2).mean() for row in range(target_matrix.shape[0])] for row2 in range(source_matrix.shape[0])])
+    #target_matrix @ source_matrix.T #-correlation_matrix  # Negative correlation as cost
+
+    # Solve the assignment problem
+    row_indices, col_indices = linear_sum_assignment(cost_matrix)
+
+    # Permute rows of source_matrix based on the assignment
+    permuted_source_matrix = source_matrix[row_indices, :]
+     
+    # col_indices - how much i need to change the first mat to get the 2nd one
+    
+    return permuted_source_matrix,col_indices  
+# def create_legend(dict_legend, size = 30, save_formats = ['.png','.svg'], 
+#                   save_addi = 'legend' , dict_legend_marker = {}, 
+#                   marker = '.', style = 'plot', s = 500, to_save = True, plot_params = {'lw':25},
+#                   save_path = os.getcwd(), params_leg = {}):
+#     fig, ax = plt.subplots()
+#     if style == 'plot':
+#         [ax.plot([],[], 
+#                  c = dict_legend[area], label = area, marker = dict_legend_marker.get(area), **plot_params) for area in dict_legend]
+#     else:
+#         if len(dict_legend_marker) == 0:
+#             [ax.scatter([],[], s=s,c = dict_legend.get(area), label = area, marker = marker, **plot_params) for area in dict_legend]
+#         else:
+#             [ax.scatter([],[], s=s,c = dict_legend[area], label = area, marker = dict_legend_marker.get(area), **plot_params) for area in dict_legend]
+#     ax.legend(prop = {'size':size},**params_leg)
+#     remove_edges(ax, left = False, bottom = False, include_ticks = False)
+#     fig.tight_layout()
+#     if to_save:
+#         [fig.savefig(save_path + os.sep + 'legend_areas_%s%s'%(save_addi,type_save)) 
+#          for type_save in save_formats]
+        
+        
         
 def str_dict2dict(string):
   """
@@ -185,9 +595,14 @@ def moving_avg_time(mat, wind = 4):
   mat = np.hstack([np.zeros((N, wind)), mat, np.zeros((N, wind))])
   return   np.hstack([np.mean(mat[:,i : i + wind] , 1).reshape((-1,1)) for i in range(T)])
 
-
+def invert_dict(dict_to_invert):
+    return {v:k for k,v in dict_to_invert.items()}
+    
+    
+    
 def create_scatter_plot(list_times, fig=[], ax=[], res=0.2, to_plot=True, max_time=500, max_neuron=5):
     """
+    TODO: merge with "plot_raster"!!
     Create a scatter plot or matrix representation for a list of neuron spike times.
 
     Parameters:
@@ -246,39 +661,39 @@ def pad_mat(mat, pad_val, size_each = 1, axis = 1):
     return mat
 
 
-def gaussian_convolve(mat, wind = 10, direction = 1, sigma = 1, norm_sum = True, plot_gaussian = False):
-    """
-    Convolve a 2D matrix with a Gaussian kernel along the specified direction.
+# def gaussian_convolve(mat, wind = 10, direction = 1, sigma = 1, norm_sum = True, plot_gaussian = False):
+#     """
+#     Convolve a 2D matrix with a Gaussian kernel along the specified direction.
     
-    Parameters:
-        mat (numpy.ndarray): The 2D input matrix to be convolved with the Gaussian kernel.
-        wind (int, optional): The half-size of the Gaussian kernel window. Default is 10.
-        direction (int, optional): The direction of convolution. 
-            1 for horizontal (along columns), 0 for vertical (along rows). Default is 1.
-        sigma (float, optional): The standard deviation of the Gaussian kernel. Default is 1.
+#     Parameters:
+#         mat (numpy.ndarray): The 2D input matrix to be convolved with the Gaussian kernel.
+#         wind (int, optional): The half-size of the Gaussian kernel window. Default is 10.
+#         direction (int, optional): The direction of convolution. 
+#             1 for horizontal (along columns), 0 for vertical (along rows). Default is 1.
+#         sigma (float, optional): The standard deviation of the Gaussian kernel. Default is 1.
     
-    Returns:
-        numpy.ndarray: The convolved 2D matrix with the same shape as the input 'mat'.
+#     Returns:
+#         numpy.ndarray: The convolved 2D matrix with the same shape as the input 'mat'.
         
-    Raises:
-        ValueError: If 'direction' is not 0 or 1.
-    """
-    if direction == 1:
-        gaussian = gaussian_array(2*wind,sigma)
-        if norm_sum:
-            gaussian = gaussian / np.sum(gaussian)
-        if plot_gaussian:
-            plt.figure(); plt.plot(gaussian)
-        mat_shape = mat.shape[1]
-        T_or = mat.shape[1]
-        mat = pad_mat(mat, np.nan, wind)
-        return np.vstack( [[ np.nansum(mat[row, t:t+2*wind]*gaussian)                    
-                     for t in range(T_or)] 
-                   for row in range(mat.shape[0])])
-    elif direction == 0:
-        return gaussian_convolve(mat.T, wind, direction = 1, sigma = sigma).T
-    else:
-        raise ValueError('invalid direction')
+#     Raises:
+#         ValueError: If 'direction' is not 0 or 1.
+#     """
+#     if direction == 1:
+#         gaussian = gaussian_array(2*wind,sigma)
+#         if norm_sum:
+#             gaussian = gaussian / np.sum(gaussian)
+#         if plot_gaussian:
+#             plt.figure(); plt.plot(gaussian)
+#         mat_shape = mat.shape[1]
+#         T_or = mat.shape[1]
+#         mat = pad_mat(mat, np.nan, wind)
+#         return np.vstack( [[ np.nansum(mat[row, t:t+2*wind]*gaussian)                    
+#                      for t in range(T_or)] 
+#                    for row in range(mat.shape[0])])
+#     elif direction == 0:
+#         return gaussian_convolve(mat.T, wind, direction = 1, sigma = sigma).T
+#     else:
+#         raise ValueError('invalid direction')
 
 
 def gaussian_array(length,sigma = 1  ):
@@ -294,8 +709,9 @@ def gaussian_array(length,sigma = 1  ):
     """
     x = np.linspace(-3, 3, length)  # Adjust the range if needed
     gaussian = np.exp(-(x ** 2) / (2 * sigma ** 2))
-    normalized_gaussian = gaussian / np.max(gaussian)
+    normalized_gaussian = gaussian / np.max(gaussian) # /sum()
     return normalized_gaussian
+    
     
     
 
@@ -317,28 +733,6 @@ def create_3d_ax(num_rows, num_cols, params = {}):
     return  fig, ax
 
 
-def plot_3d(mat, params_fig = {}, fig = [], ax = [], params_plot = {}, type_plot = 'plot'):
-    """
-    Plot 3D data.
-
-    Parameters:
-    - mat (numpy.ndarray): 3D data to be plotted.
-    - params_fig (dict): Additional parameters for creating the figure.
-    - fig (matplotlib.figure.Figure): Existing figure to use (optional).
-    - ax (numpy.ndarray): Existing 3D subplot axes to use (optional).
-    - params_plot (dict): Additional parameters for the plot.
-    - type_plot (str): Type of 3D plot ('plot' for line plot, 'scatter' for scatter plot).
-
-    Returns:
-    - fig (matplotlib.figure.Figure): The created or existing figure.
-    - ax (numpy.ndarray): The created or existing 3D subplot axes.
-    """
-    if checkEmptyList(ax):
-        fig, ax = create_3d_ax(1,1, params_fig)
-    if type_plot == 'plot':
-        ax.plot(mat[0], mat[1], mat[2], **params_plot)
-    else:
-        ax.scatter(mat[0], mat[1], mat[2], **params_plot)
 
 def init_mat(size_mat, r_seed = 0, dist_type = 'norm', init_params = {'loc':0,'scale':1}, normalize = False):
   """
@@ -1001,6 +1395,88 @@ def movmfunc(func, mat, window = 3, direction = 0, dist = 'uni'):
         
   return movefunc_res
 
+
+def plot_raster(dict_times, fig = [], ax = [], params_plot = {'marker':'|','s':100},
+                figsize = None, return_meta = True, max_neuron = 90, max_time = 100,
+               to_save = True, save_path = '', save_name = 'raster', xlabel =  'Time',
+               ylabel = 'Neuon', reduce_min=False, min_val = np.nan):
+    """
+    Plots a raster plot of neural spike times.
+
+    Parameters:
+    - dict_times (dict): A dictionary where keys are neuron identifiers and values are arrays of spike times.
+    - fig (list, optional): Existing figure object to plot on. If empty, a new figure will be created.
+    - ax (list, optional): Existing axis object to plot on. If empty, a new axis will be created.
+    - params_plot (dict, optional): Parameters for the scatter plot, such as marker style and size. Default is {'marker': '|', 's': 100}.
+    - figsize (tuple, optional): Size of the figure. If None, defaults to (max_time*0.4, max_neuron*0.3).
+    - return_meta (bool, optional): Whether to return metadata about the plot. Default is True.
+    - max_neuron (int, optional): Maximum number of neurons to plot. Default is 90.
+    - max_time (int, optional): Maximum time value for x-axis. Default is 100.
+    - to_save (bool, optional): Whether to save the figure. Default is True.
+    - save_path (str, optional): Path to save the figure. Default is ''.
+    - save_name (str, optional): Name of the saved figure file. Default is 'raster'.
+
+    Returns:
+    - tuple: If return_meta is True, returns a tuple (xs_vals, ys_vals, keys2old_keys, keys2new_keys) containing:
+        - xs_vals: Flattened list of x-values (spike times) for the scatter plot.
+        - ys_vals: Flattened list of y-values (neuron identifiers) for the scatter plot.
+        - keys2old_keys: Dictionary mapping new keys to original neuron identifiers.
+        - keys2new_keys: Dictionary mapping original neuron identifiers to new keys.
+        
+    example:
+        fig, axs = plt.subplots(len(types_with_neg_pos) , num_trials_show, figsize = (50,20), sharex = True, sharey = True)
+        [[plot_raster(fire_rate_per_condition[condition]['trial_%d'%trial_show_num]['Neuron'], params_plot = {'lw':1, 'marker' :'|'}, xlabel = 'sec', ylabel = 'Neuron', ax = axs[condition_num, trial_show_num], fig = fig, return_meta = False, remove_min = True)
+            for trial_show_num
+            in range(num_trials_show)    
+        ] 
+        for condition_num, condition in enumerate(types_with_neg_pos)
+        ]
+    """
+    params_plot = {**{'marker':'|','s':100}, **params_plot }
+    if np.isnan(min_val):   
+        min_val = np.min([np.min(value) for value in list(dict_times.values()) if len(value) > 0])
+        
+    if reduce_min:
+        
+        dict_times = {key:val - min_val for key, val in dict_times.items()}
+    dict_times = {key:val[val < max_time] for c, (key,val) in enumerate(dict_times.items()) if c < max_neuron}
+    # first change keys to number
+    unique_keys = np.unique(list(dict_times.keys()))
+    
+    keys2old_keys = {key: old_key for key, old_key in enumerate(unique_keys)}
+    keys2new_keys = invert_dict(keys2old_keys)
+    
+    new_times = {keys2new_keys[key] : time for key,time in dict_times.items()}
+    #     if reduce_min:
+    #         min_val = np.min([np.min(value) for value in list(new_times.values()) if len(value) > 0])
+    #         print('min val')
+    #         print(min_val)
+    #         new_times = {key:val - min_val for key, val in new_times.items()}
+
+    ys_dict = {key: [key]*len(time) for key,time in new_times.items()}
+    
+
+    
+    unique_new_keys = np.unique(list(new_times.keys()))
+    ys_vals = lists2list([ys_dict[key] for key in unique_new_keys])
+    xs_vals = lists2list([new_times[key] for key in unique_new_keys])
+
+    if checkEmptyList(fig) and checkEmptyList(ax):
+        if not isinstance(figsize, tuple):
+            figsize = (max_time*0.4, max_neuron*0.3)
+        fig, ax = plt.subplots(1,1, figsize =figsize)
+    elif checkEmptyList(fig) != checkEmptyList(ax):
+        raise ValueError('you must provide both fig and ax to plot')
+    ax.scatter(xs_vals, ys_vals, **params_plot)
+    #ax.set_xlim([0,max_time])
+    ax.set_ylim(bottom = -1)
+    remove_edges(ax, include_ticks=True, left = True, bottom = True)
+    add_labels(ax, xlabel = xlabel, ylabel = ylabel)
+    if to_save:
+        save_fig(save_name, fig, save_path)
+    if return_meta:
+        return xs_vals, ys_vals, keys2old_keys, keys2new_keys, min_val
+    
   
 def add_labels(ax, xlabel='X', ylabel='Y', zlabel='', title='', xlim = None, ylim = None, zlim = None,xticklabels = np.array([None]),
                yticklabels = np.array([None] ), xticks = [], yticks = [], legend = [], ylabel_params = {},zlabel_params = {}, xlabel_params = {},  title_params = {}):
@@ -1442,7 +1918,25 @@ def save_file_dynamics(save_name, folders_names,to_save =[], invalid_signs = '!@
     elif type_save == '.pkl':
         if not save_name.endswith('.pkl'): save_name = save_name + '.pkl'
         dill.dump_session(path_name +sep +  save_name)
+        
+        
+def find_mid(edges):
+    return 0.5*(edges[1:] + edges[:-1])
 
+
+
+
+        
+        
+        
+def save_fig(name_fig,fig, save_path = '', formats = ['png','svg'], save_params = {}, verbose = True) :
+    if len(save_path) == 0:
+        save_path = os.getcwd()
+    if 'transparent' not in save_params:
+        save_params['transparent'] = True
+    [fig.savefig(save_path + os.sep + '%s.%s'%(name_fig, format_i), **save_params) for format_i in formats]
+    if verbose:
+        print('saved figure: %s'%(save_path + os.sep + '%s.%s'%(name_fig, 'png')))
 
 def load_pickle(path):
     """
@@ -1528,6 +2022,75 @@ def str2bool(str_to_change):
         str_to_change = (str_to_change.lower()  == 'true') or (str_to_change.lower()  == 'yes')  or (str_to_change.lower()  == 't')
     return str_to_change
 
+from glob import glob
+def identify_file_within_path(directory, 
+                              start_with = '', 
+                              end_with = '',
+                              within = '',
+                              format_file = '.mat', 
+                              recursive = False,
+                              enable_multiple_files = False):
+    """
+    Identifies files in a specified directory based on name patterns and file format.
+
+    Parameters:
+    - directory (str): Path to the directory where files are searched.
+    - start_with (str, optional): Filter for files that start with this prefix. Default is '' (no filter).
+    - end_with (str, optional): Filter for files that end with this suffix. Default is '' (no filter).
+    - within (str, optional): Filter for files that contain this substring. Default is '' (no filter).
+    - format_file (str, optional): File extension to filter (e.g., '.mat'). Default is '.mat'.
+    - recursive (bool, optional): If True, searches files recursively in subdirectories. Default is False.
+    - enable_multiple_files (bool, optional): If True, allows multiple matching files to be returned. Default is False.
+
+    Returns:
+    - str: The matching file name if `enable_multiple_files` is False.
+    - list: A list of matching file names if `enable_multiple_files` is True.
+    
+    Raises:
+    - AssertionError: If `enable_multiple_files` is False and multiple files match the criteria.
+    """    
+    if not format_file.startswith('.'):
+        format_file = '.' + format_file
+    
+    files = glob(directory  + os.sep + '*' + format_file, recursive = recursive)
+    print(files)
+    files_only = [f for f in files if os.path.isfile(f)]
+    file_names = [os.path.basename(directory) for file_path in files_only]
+    if len(np.unique(file_names)) != len(np.unique(files_only)):
+        print('pay attention, file names are not unique')
+    
+    file_names_to_include_list = []
+    for file_num, file_name in enumerate(file_names):    
+        start_with_condition = (start_with and file_name.startswith(start_with)) or (not start_with)
+        end_with_condition = (end_with 
+                                and file_name.endswith(end_with)) or (not end_with)
+        within_condition = (within and file_name.endswith(within)) or (not within)
+        if start_with_condition  and end_with_condition  and within_condition:
+            file_names_to_include_list.append(file_name)
+    if enable_multiple_files or len(file_names_to_include_list) == 0:
+        return file_names_to_include_list
+    else:
+        assert len(file_names_to_include_list) == 1
+        return enable_multiple_files[0]
+        
+    
+    
+    
+
+
+
+def create_readme(text, name="readme.txt", directory=None):
+    """Creates a text file with the given name and content in the specified directory."""
+    if directory:
+        os.makedirs(directory, exist_ok=True)  # Ensure the directory exists
+        file_path = os.path.join(directory, name)
+    else:
+        file_path = name
+
+    with open(file_path, "w") as file:
+        file.write(text)
+
+    return file_path  
 
 def find_closest(vec1, vec2, metric = 'mse'):
     """
@@ -1555,7 +2118,7 @@ def find_closest(vec1, vec2, metric = 'mse'):
     else:
         raise ValueError('undefined metric!')
 
-def create_colors(len_colors, perm = [0,1,2], cmap = ''):
+def create_colors(len_colors, perm = [0,1,2], style = 'random', cmap  = 'viridis', shuffle_colors = False, shuffle_seed = 0):
     """
     Create a set of discrete colors with a one-directional order
     Input: 
@@ -1563,31 +2126,47 @@ def create_colors(len_colors, perm = [0,1,2], cmap = ''):
     Output:
         3 X len_colors matrix decpiting the colors in the cols
     """
-    if len(cmap) == 0:
+    if style == 'random':
         colors = np.vstack([np.linspace(0,1,len_colors),(1-np.linspace(0,1,len_colors))**2,1-np.linspace(0,1,len_colors)])
         colors = colors[perm, :]
+        assert not shuffle_colors, "TB done"
     else:
-        # Specify the number of colors you want
-        n = len_colors
+        
+        # Define the colormap you want to use
+        #cmap = plt.get_cmap()  # Replace 'viridis' with the desired colormap name
 
-        # Generate n evenly spaced values from 0 to 1
-        colors = np.linspace(0, 0.9, n+1)
-
-        # Get the 'hsv' colormap
-        hsv = cm.get_cmap(cmap, n+1)
-
-        # Map the color indices to the colormap
-        color_list = hsv(colors)
-        colors = color_list[:-1]
-        # Printing or returning the colors
-        #print(color_list)
-                
-        #hhhhhhhhhhh
+        cmap = plt.get_cmap(cmap) 
+        # Create an array of values ranging from 0 to 1 to represent positions in the colormap
+        positions = np.linspace(0, 1, len_colors)
+        
+        # Generate the list of colors by applying the colormap to the positions
+        colors = [cmap(pos) for pos in positions]
+        
+        # You can now use the 'colors' list as a list of colors in your application
+        if shuffle_colors:
+            random.seed(shuffle_seed)
+            random.shuffle(colors)
+            
     return colors
+
+
+def order_grandchildren_in_hierarchical_dict(hierarchical_dict_cur, cur_key = '', cur_list = []):
+  # example:
+  # #simple_dict = {'parent':{'kid1':{}, 'kid2':{}, 'kid3':{'grand1':{}, 'grand2':{}}}}
+  # order_grandchildren_in_hierarchical_dict(simple_dict)
+  if len(hierarchical_dict_cur) == 0:
+    cur_list.append(cur_key)
+    return cur_list
+  else:
+    for key, val in hierarchical_dict_cur.items():
+      next_v = order_grandchildren_in_hierarchical_dict(val, key, cur_list)
+  return cur_list
+
+
 
 def my_isin(vec, vec_edges = [], return_style = 'all', val_nonzero = 1, num_point = 8, allow_part_time = False):    
     """
-    Determine the positions of firings within specified edges and return the result in different formats.
+    Determine the positions of firings within specified edges an return the result in different formats.
 
     Parameters:
     vec : array-like
@@ -1720,27 +2299,363 @@ def claculate_percent_close(reco, real, epsilon_close = 0.1, return_quantiles = 
         return np.mean(close_enough), q1, q2
     return np.mean(close_enough)
     
-def load_mat_file(mat_name , mat_path = '',sep = sep):
-    """
-    Load a MATLAB `.mat` file. Useful for uploading the C. elegans data.
+# def load_mat_file(mat_name , mat_path = '',sep = sep):
+#     """
+#     Load a MATLAB `.mat` file. Useful for uploading the C. elegans data.
     
+#     Parameters:
+#     -----------
+#     mat_name: str
+#         The name of the MATLAB file.
+#     mat_path: str, optional (default: '')
+#         The path to the MATLAB file.
+#     sep: str, optional (default: the system separator)
+#         The separator to use in the file path.
+    
+#     Returns:
+#     --------
+#     data_dict: dict
+#         A dictionary containing the contents of the MATLAB file.
+#     """
+    
+#     data_dict = mat73.loadmat(mat_path+sep+mat_name)
+#     return data_dict
+
+import mat73
+import scipy.io as sio
+from scipy.sparse import coo_matrix  
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def save_df_as_fig(df, params_dict={}):
+    fig_width = params_dict.get("figsize", (20, 5))[0]
+    base_height = params_dict.get("row_height", 0.5)  # base row height
+    df_str = df.astype(str)
+    
+    row_heights = [
+        base_height + 0.02 * max(len(cell) for cell in row)
+        for row in df_str.values
+    ]
+    total_height = sum(row_heights) + 1  # +1 for column headers
+
+    fig, ax = plt.subplots(figsize=(fig_width, total_height))
+    
+    #fig, ax = plt.subplots(figsize=params_dict.get("figsize", (20, 5)))
+    ax.axis('off')
+    pd.plotting.table(
+    ax,
+    data=df.astype(str),  # <- pass as 'data'
+    loc=params_dict.get("loc", "center"),
+    colWidths=params_dict.get("colWidths", [0.2] * len(df.columns))
+    )
+
+    save_fig(
+        params_dict.get("fig_name", "df_image"),
+        fig,
+        params_dict.get("save_path", os.getcwd()),
+        save_params=params_dict.get("save_params", {'dpi': params_dict.get("dpi", 300)})
+    )
+    print('saved in %s' % params_dict.get("save_path", os.getcwd()))
+    plt.close(fig)
+
+
+
+
+def from_spike_times_to_rate(spike_dict, type_convert = 'discrete',
+                             res = 0.01, max_min_val = [], return_T = False, 
+                             T_max = np.inf, T_min = 0,  
+                             params_gauss = {'wind' : 10, 'direction' : 1, 'sigma' : 1, 'norm_sum' : True, 'plot_gaussian' : False}):
+    """
+    Converts spike times to firing rates.
+    spike dict is dictionary of units vs spike times
+    res is how much to mutiply it by, such that each res bin will get 1 index. For instance, if res is 0.01 then each [0,1] will get 100 indices. 
+    For instance, if my units are ms, an I want 20ms each index, I can have res = 20. 
+    in this case it would be better to have res = 1, and then in params gauss have wind = 20 ms and sigma = 5 ms. 
     Parameters:
-    -----------
-    mat_name: str
-        The name of the MATLAB file.
-    mat_path: str, optional (default: '')
-        The path to the MATLAB file.
-    sep: str, optional (default: the system separator)
-        The separator to use in the file path.
+    - spike_dict (dict): A dictionary of units vs spike times.
+    - res (float): A value by which to multiply the spike times.
+    - type_convert (str): Type of conversion to perform (default is 'discrete').
+    - Ts (dict): Dictionary containing time indices.
+    - Ns (dict): Dictionary containing neuron indices.
+    - firings_rates_gauss (dict): Dictionary containing Gaussian-convolved firing rates.
+    - firings_rates (dict): Dictionary containing firing rates.
+    - max_min_val (list): List containing minimum and maximum values.
+    - return_T (bool): Whether to return firing rate matrices (default is False).
+    - T_max (float): Maximum time value (default is np.inf).
+    - params_gauss (dict): Dictionary containing parameters for Gaussian convolution.
     
     Returns:
-    --------
-    data_dict: dict
-        A dictionary containing the contents of the MATLAB file.
+    - firing_rate_mat (ndarray): Matrix containing firing rates.
+    - firing_rate_mat_gauss (ndarray): Matrix containing Gaussian-convolved firing rates.
+    - return_T (bool): Whether to return firing rate matrices.
+    
+    import numpy as np
+
+
+    """  
+    if isinstance(spike_dict , (np.ndarray, list)):
+        spike_dict = {1: spike_dict}       
+        
+        
+    if T_min >= T_max:
+        raise ValueError('T_min must be larger than T_max')
+    if res != 1:
+        spike_dict = {key:np.array(val) / res for key,val in spike_dict.items()}
+    if T_min > 0:
+        spike_dict = {key:val - T_min for key,val in spike_dict.items()}
+        spike_dict = {key : val[val > 0] for key,val in spike_dict.items()}
+    print(type(spike_dict))
+        
+    """
+    make sure keys are continues
+    """
+    if set(np.arange(len(spike_dict))) != set(list(spike_dict.keys())):
+        new_keys = np.arange(len(spike_dict))
+        old_keys = list(spike_dict.keys())
+        old2new = {old:new for old,new in zip(old_keys, new_keys)}
+        spike_dict = {old2new[key]:val for key,val in spike_dict.items()}
+    else:
+        old2new = {}
+    
+    
+    
+    if checkEmptyList(max_min_val):
+        try:
+            min_val = np.min([np.min(val) for val in list(spike_dict.values()) if len(val) > 0])
+            max_val = np.max([np.max(val) for val in list(spike_dict.values()) if len(val) > 0])
+        except:
+            print(spike_dict)
+        #min_max_val = [min_val, max_val]
+        
+        
+    N = len(spike_dict)
+    # if (min_val < 0 and T_min == 0) or T_min > 0:
+    #     if T_min == 0:
+    #         T_min = min_val
+    #     spike_dict = {key : val - T_min for key,val in spike_dict.items()}
+    #     spike_dict = {key : val[val > 0] for key,val in spike_dict.items()}
+        
+    if T_min > 0:
+        max_val = max_val - T_min     
+    max_val = int(np.ceil(max_val))
+    max_val = int(np.min([max_val, T_max]))
+    firing_rate_mat = np.zeros((int(N) ,max_val))    
+
+        
+    if type_convert == 'discrete':         
+        T_thres = T_max #- T_min
+        tup_neurons_and_spikes = np.vstack([ np.hstack([np.array([neuron]*np.sum( times < T_thres )).reshape((-1,1)) , np.array(times[ times < T_thres]).reshape((-1,1)) ])
+                                  for neuron, times  in spike_dict.items()])
+        rows =  tup_neurons_and_spikes[:,0]
+        cols =  tup_neurons_and_spikes[:,1]
+        
+        data = np.ones(len(rows))  # Assuming all values are 1
+        sparse_mat = coo_matrix((data, (rows, cols)), shape=(N, max_val))
+        
+        # for count, (neuron, times) in enumerate(spike_dict.items()):
+                
+        #     times_within = times.astype(int) #- max_min_per_file[neural_key][0]
+
+        #     max_ind = times_within[(times_within > T_min ) & (times_within < T_max)]
+
+        #     firing_rate_mat[count, max_ind] += 1
+
+        firing_rate_mat = sparse_mat.toarray()
+        firing_rate_mat_gauss = gaussian_convolve(firing_rate_mat,  **params_gauss)
+            
+    if T_min > 0 :     
+        firing_rate_mat = firing_rate_mat[:, T_min:]
+        firing_rate_mat_gauss = firing_rate_mat_gauss[:, T_min:]
+    if return_T:
+        return  firing_rate_mat, firing_rate_mat_gauss, return_T
+    return  firing_rate_mat, firing_rate_mat_gauss, old2new
+
+def split_to_trials(spikes_info = {}, firing_rate_mat = [], trial_start_array = [], trial_end_array = [], trial_word = 'trial', trial_key_type = 'str'):
+    """
+    Splits the provided spikes information and/or firing rate matrix into trials based on the given start and end times.
+    
+    Parameters:
+    - spikes_info (dict, optional): Dictionary containing spike information for neurons. Default is an empty dictionary.
+    - firing_rate_mat (list, optional): Matrix containing firing rates. Default is an empty list.
+    - trial_start_array (array): Array containing the start times of the trials.
+    - trial_end_array (array): Array containing the end times of the trials.
+    - trial_word (str, optional): Prefix for trial keys if trial_key_type is 'str'. Default is 'trial'.
+    - trial_key_type (str, optional): Type of keys for trials in the resulting dictionaries. Can be 'str' or 'int'. Default is 'str'.
+    
+    Returns:
+    - trials_rate (dict): Dictionary containing the firing rate matrices for each trial.
+    - trials_fire (dict): Dictionary containing the spike information for each trial.
+    
+    Raises:
+    - ValueError: If no spikes or firing rate is provided, or if start and end times do not match, or if trial_key_type is not 'int' or 'str'.
     """
     
-    data_dict = mat73.loadmat(mat_path+sep+mat_name)
-    return data_dict
+    # the function can split both dict and mat. if both provided - both. if one - only one.
+    
+    
+    if len(spikes_info) == 0 and checkEmptyList(firing_rate_mat):
+        raise ValueError('No spikes or firing rate provided!') 
+        
+    if len(trial_start_array) != len(trial_end_array):
+        raise ValueError('start and end times must match!')
+    if len(trial_end_array) == 0:
+        raise ValueError('start or end cannot be empty!')
+    
+    ##########################################################
+    if not checkEmptyList(firing_rate_mat):
+        if  trial_key_type == 'str':
+            trials_rate = {'%s_%d'%(trial_word, trial_count):firing_rate_mat[:, start:end]  for trial_count, (start, end) in enumerate(zip(trial_start_array, trial_end_array))}
+        elif  trial_key_type == 'int':
+            trials_rate = {trial_count : firing_rate_mat[:, start:end]  for trial_count, (start, end) in enumerate(zip(trial_start_array, trial_end_array))}
+        else:
+            raise ValueError('trial_key_type must be int or str')
+    else:
+        trials_rate = {}
+        
+        
+    ##########################################################
+    if not checkEmptyList(spikes_info):
+        if  trial_key_type == 'str':
+            trials_fire = {'%s_%d'%(trial_word, trial_count) : 
+                           {neuron:times[(times <= end) & (times > start)] for neuron, times in spikes_info.items()}
+                           for trial_count, (start, end) in enumerate(zip(trial_start_array, trial_end_array))}
+            
+            
+        elif  trial_key_type == 'int':
+            trials_fire = {trial_count: 
+                           {neuron:times[(times <= end) & (times > start)] for neuron, times in spikes_info.items()}
+                           for trial_count, (start, end) in enumerate(zip(trial_start_array, trial_end_array))}
+            
+        else:
+            raise ValueError('trial_key_type must be int or str')
+    else:
+        trials_fire = {}
+        
+    return trials_rate, trials_fire
+        
+
+
+def merge_dicts(list_of_dicts):
+    super_dict = {}
+    for dict_i in list_of_dicts:
+        super_dict = {**super_dict, **dict_i}
+    return super_dict
+            
+def vstack_uneven(list_of_arrays):
+    max_len = np.max([len(el) for el in list_of_arrays])
+    num_ar = len(list_of_arrays)
+    
+    zers = np.zeros((num_ar, max_len))*np.nan
+    for c, ar in enumerate(list_of_arrays):
+        zers[c][:len(ar)] = ar
+    return zers
+    
+def dstack_uneven(list_of_arrays, allow_unequal_rows = False, 
+                  max_dur = 2000, fill_val = np.nan):
+    max_len = np.max([el.shape[1] for el in list_of_arrays if len(el) > 0])
+    max_len = np.min([max_len, max_dur])
+    num_rows = np.array([el.shape[0] for el in list_of_arrays])
+    num_rows[num_rows == 0] = np.max(num_rows)
+    #if np.any([len(el) for el in list_of_arrays]) == 0:
+            
+        
+    if np.any(num_rows[0] != num_rows):
+        if allow_unequal_rows:
+            max_rows = np.max(num_rows)
+        else:
+            raise ValueError('rows mismatch')
+    else:
+        max_rows = num_rows[0]
+    
+    num_ar = len(list_of_arrays)    
+    zers = np.ones(( max_rows , max_len, num_ar))*fill_val
+    
+    for c, ar in enumerate(list_of_arrays):
+        if len(ar) > 0:
+            if ar.shape[1] > max_dur:
+                ar = ar[:, :max_dur]
+            zers[:ar.shape[0],:min([max_dur, ar.shape[1]]), c] = ar
+    return zers
+        
+
+
+def create_unique_colors(cmap, n = 5 ):
+    # Generate n evenly spaced values from 0 to 1
+    colors = np.linspace(0, 1, n)
+
+    # Get the 'hsv' colormap
+    hsv = cm.get_cmap(cmap, n)
+
+    # Map the color indices to the colormap
+    color_list = hsv(colors)
+
+    # Printing or returning the colors
+    return color_list
+    
+    
+    
+
+        
+        
+# def gaussian_convolve(mat, wind = 10, direction = 1, sigma = 1):
+#     """
+#     Convolve a 2D matrix with a Gaussian kernel along the specified direction.
+    
+#     Parameters:
+#         mat (numpy.ndarray): The 2D input matrix to be convolved with the Gaussian kernel.
+#         wind (int, optional): The half-size of the Gaussian kernel window. Default is 10.
+#         direction (int, optional): The direction of convolution. 
+#             1 for horizontal (along columns), 0 for vertical (along rows). Default is 1.
+#         sigma (float, optional): The standard deviation of the Gaussian kernel. Default is 1.
+    
+#     Returns:
+#         numpy.ndarray: The convolved 2D matrix with the same shape as the input 'mat'.
+        
+#     Raises:
+#         ValueError: If 'direction' is not 0 or 1.
+#     """
+#     if len(mat.shape) == 2:
+#         if direction == 1:
+#             gaussian = gaussian_array(2*wind,sigma)
+#             mat_shape = mat.shape[1]
+#             return np.vstack([ [np.sum(mat[row, np.max([t - wind,0]): np.min([t + wind, mat_shape])]*cut_gauss(gaussian, t, wind, left = 0, right = mat_shape)) 
+#                          for t in range(mat.shape[1])] 
+#                        for row in range(mat.shape[0])])
+#         elif direction == 0:
+#             return gaussian_convolve(mat.T, wind, direction = 1, sigma = sigma).T
+#         else:
+#             raise ValueError('invalid direction')
+#     elif len(mat.shape) == 3 and direction >= 2:
+#         raise ValueError('to be implemented convolve')
+#     elif len(mat.shape) == 3:
+#         return np.dstack([gaussian_convolve(mat[:,:,d], wind, direction, sigma ) 
+#                           for d in range(mat.shape[2])])
+#     else:
+#         raise ValueError('?!')
+            
+        
+
+def load_mat_file(mat_name , mat_path = '',sep = sep, squeeze_me = True,simplify_cells = True):
+    """
+    Function to load mat files. Useful for uploading the c. elegans data. 
+    Example:
+        load_mat_file('WT_Stim.mat','E:\CoDyS-Python-rep-\other_models')
+    """
+    try:
+        if mat_path == '':
+            data_dict = sio.loadmat(mat_name, squeeze_me = squeeze_me,simplify_cells = simplify_cells)
+        else:
+            data_dict = sio.loadmat(mat_path+sep+mat_name, squeeze_me = True,simplify_cells = simplify_cells)
+    except: 
+        try:
+            data_dict = mat73.loadmat(mat_path+sep+mat_name)
+        except:
+            data_dict = scipy.io.loadmat(mat_path+sep+mat_name)
+    return data_dict    
+    
+
 
 def min_dist(dotA1, dotA2, dotB1, dotB2, num_sects = 500):
     """
@@ -1843,6 +2758,45 @@ def norm_over_time(coefficients, type_norm = 'normal'):
     if type_norm == 'normal':
         coefficients_norm = (coefficients - np.mean(coefficients,1).reshape((-1,1)))/np.std(coefficients, 1).reshape((-1,1))
     return coefficients_norm
+
+def normalize_data(data, style_normalize='minmax', axis=1):
+    data = np.asarray(data)
+    original_shape = data.shape
+
+    if data.ndim == 1:
+        data = data.reshape(-1, 1)
+        axis = 0
+
+    if style_normalize == 'minmax':
+        min_val = np.nanmin(data, axis=axis, keepdims=True)
+        max_val = np.nanmax(data, axis=axis, keepdims=True)
+        norm = (data - min_val) / (max_val - min_val + 1e-8)
+
+    elif style_normalize == 'zscore':
+        mean = np.nanmean(data, axis=axis, keepdims=True)
+        std = np.nanstd(data, axis=axis, keepdims=True)
+        norm = (data - mean) / (std + 1e-8)
+
+    elif style_normalize == 'robust':
+        median = np.nanmedian(data, axis=axis, keepdims=True)
+        q1 = np.nanpercentile(data, 25, axis=axis, keepdims=True)
+        q3 = np.nanpercentile(data, 75, axis=axis, keepdims=True)
+        iqr = q3 - q1 + 1e-8
+        norm = (data - median) / iqr
+
+    elif style_normalize == 'maxabs':
+        max_abs = np.nanmax(np.abs(data), axis=axis, keepdims=True)
+        norm = data / (max_abs + 1e-8)
+
+    elif style_normalize == 'robustmaxabs':
+        max_abs = np.nanpercentile(np.abs(data), 99, axis=axis, keepdims=True)
+        norm = data / (max_abs + 1e-8)
+
+    else:
+        raise ValueError(f"Unsupported normalization style: {style_normalize}")
+
+    return norm.reshape(original_shape)
+
 
 def find_perpendicular(d1, d2, perp_length = 1, prev_v = [], next_v = [], ref_point = [],choose_meth = 'intersection',initial_point = 'mid',  
                        direction_initial = 'low', return_unchose = False, layer_num = 0):
@@ -2077,7 +3031,7 @@ def plot_multi_colors(store_dict,min_time_plot = 0,max_time_plot = -100,  colors
     
 
 
-def remove_edges(ax, include_ticks = False, top = False, right = False, bottom = False, left = False):
+def remove_edges(ax, include_ticks = True, top = False, right = False, bottom = True, left = True):
     """
     Remove the specified edges (spines) of the plot and optionally the ticks of the plot.
     
@@ -2108,7 +3062,9 @@ def remove_edges(ax, include_ticks = False, top = False, right = False, bottom =
         ax.get_xaxis().set_ticks([])
         ax.get_yaxis().set_ticks([])
 
-def norm_coeffs(coefficients, type_norm, same_width = True,width_des = 0.7,factor_power = 0.9, min_width = 0.01):
+def norm_coeffs(coefficients, type_norm, 
+                same_width = True,width_des = 0.7,
+                factor_power = 0.9, min_width = 0.01):
     """
     Normalize the coefficients according to the specified type of normalization.
     
@@ -2159,7 +3115,37 @@ def norm_coeffs(coefficients, type_norm, same_width = True,width_des = 0.7,facto
     coefficients_n[coefficients_n < min_width]  = min_width
     return coefficients_n
 
-  
+
+def plot_quiver_for_transition(A, min_grid = -2, max_grid = 2,
+                               num_points = 10, ax = [], plot_params = {},
+                               scale = 50, to_add_labels = True):
+    # Create a grid of points
+    x_values = np.linspace(min_grid, max_grid, num_points)
+    y_values = np.linspace(min_grid, max_grid, num_points)
+    X, Y = np.meshgrid(x_values, y_values)
+
+    # Compute the transformation
+    U = A[0, 0] * X + A[0, 1] * Y
+    V = A[1, 0] * X + A[1, 1] * Y
+
+    # Normalize the vectors
+    magnitude = np.sqrt(U**2 + V**2)
+    U = U / (magnitude + 1e-6)
+    V = V / (magnitude + 1e-6)
+    
+    
+    # Plot the quiver
+    if checkEmptyList(ax):
+        fig, ax = plt.subplots()
+        
+    ax.quiver(X, Y, U, V, scale = scale, **plot_params)#, headwidth=5, headlength=7, headaxislength=6, minlength=0.1,*plot_params)
+    
+    if to_add_labels:
+        ax.set_xlabel('$\delta x$')
+        ax.set_ylabel('$\delta y$')
+        
+        
+        
 def lists2list(xss):
     """
     Flatten a list of lists into a single list.
@@ -2193,4 +3179,11 @@ def mean_change(signal, axis = 0):
         The mean change of the signal.
     """     
     return np.mean(np.abs(np.diff(signal, axis = axis)), axis = axis)
+    
+
+
+
+def kmeans_with_cross_labels():
+    # this finds clusters for each groups with some clusters shared among groups
+    pass
     
