@@ -9,6 +9,7 @@ Created on Wed Feb  1 04:06:34 2023
 """
 Imports
 """
+print('basic uploaded')
 import matplotlib
 try:
     from webcolors import name_to_rgb
@@ -120,6 +121,21 @@ def open_json_file_utf_8(file_name):
         data = json.load(file)
     return data
 
+def calculate_graph_similarity(labels1d, distance_type = 'linear'):
+    # just a single array
+    if isinstance(labels1d, list) :
+        assert not isinstance(labels1d[0], tuple), "labels1d need to be 1d"
+        labels1d = np.array(labels1d)
+        
+    assert distance_type in ['linear'], "distance_type = %s to be defined!"%distance_type
+    
+    if distance_type == 'linear':
+        graph_distance = labels1d.reshape((-1,1)) - labels1d.reshape((1,-1))
+    else:
+        raise ValueError('how?!')
+    
+    return graph_distance
+        
 
 
 from scipy.interpolate import interp1d
@@ -300,7 +316,9 @@ def plot_3d(mat, params_fig = {}, fig = [], ax = [], params_plot = {}, type_plot
 #     else:
 #         ax.scatter(mat[0], mat[1], mat[2], **params_plot)
         
-def make_labels_unique_order(labels):
+   
+
+def make_labels_unique_order(labels, make_array = True): # make_array should be false in case you use the tuples as the labels.
     """
     Returns an array of unique labels, preserving their original order.
 
@@ -313,12 +331,19 @@ def make_labels_unique_order(labels):
     Example:
     >>> make_labels_unique_order(['a', 'b', 'a', 'c'])
     array(['a', 'b', 'c'], dtype='<U1')
-    """    
+    """   
     labels_visited = []
     for label in labels:
         if label not in labels_visited:
             labels_visited.append(label)
-    return np.array(labels_visited)    
+    if make_array:
+        return np.array(labels_visited)
+    return labels_visited
+
+
+
+def find_indices_in_list(list1, element):
+    return [i for i, el in enumerate(list1) if el == element]
 
 
 def create_legend(dict_legend, size = 30, save_formats = ['.png','.svg'], 
@@ -326,12 +351,25 @@ def create_legend(dict_legend, size = 30, save_formats = ['.png','.svg'],
                   marker = '.', style = 'plot', s = 500, to_save = True, plot_params = {'lw':10}, to_sort_keys = False,
                   save_path = os.getcwd(), params_leg = {}, fig = [], ax = [], figsize = None, to_remove_edges =  True,
                   transparent = True,
-                  dict_legend_keys = []):
+                  dict_legend_keys = [], dict_legend_ls = {}):
     
+    if not os.path.exists(save_path):
+        print('path %s does not exist!'%save_path)
+        to_create_the_path = str2bool(input('do you want to create the path \n %s'%save_path))
+        if to_create_the_path:
+            os.makedirs(save_path)
+        
+        
+        
+    if 'ls' in plot_params: 
+        ls = plot_params['ls']
+        del plot_params['ls']
+    else:
+        ls = '-'
     if len(dict_legend_keys) == 0:
         dict_legend_keys = list(dict_legend.keys())
-    if to_sort_keys:
-        dict_legend_keys = np.sort(dict_legend_keys)
+        if to_sort_keys: # and dict_legend_keys:
+            dict_legend_keys = np.sort(dict_legend_keys)
         
     assert np.array([el in dict_legend for el in dict_legend_keys]).all(), 'pay attention! some elemenets you provided in dict_legend_keys do not exist in dict_legend!'
     if set(dict_legend_keys) != set(list(dict_legend.keys())): print('pay attention! not all keys of dict_legend exist in dict_legend_keys!')
@@ -353,7 +391,8 @@ def create_legend(dict_legend, size = 30, save_formats = ['.png','.svg'],
     
     if style == 'plot':
         [ax.plot([],[], 
-                 c = dict_legend[area], label = area, marker = dict_legend_marker.get(area), **plot_params) for area in dict_legend_keys]
+                 c = dict_legend[area], label = area, marker = dict_legend_marker.get(area),
+                 ls = dict_legend_ls.get(area, ls), **plot_params) for area in dict_legend_keys]
     else:
         if len(dict_legend_marker) == 0:
             [ax.scatter([],[], s=s,c = dict_legend.get(area), label = area, marker = marker, **plot_params) for area in dict_legend_keys]
@@ -376,6 +415,7 @@ def create_legend(dict_legend, size = 30, save_formats = ['.png','.svg'],
         
         
         
+        
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -383,7 +423,29 @@ import matplotlib.cm as cm
 
 
         
-        
+def sort_list_by_argsort(my_list, argsort):
+    assert len(my_list) == len(argsort)
+    assert np.max(argsort) == len(my_list) - 1
+    assert set(np.unique(argsort)) == set(argsort)
+    return [my_list[argi] for argi in argsort]
+    
+    
+    
+
+def sort_tuple(list_of_tuples) :
+    if not isinstance(list_of_tuples, (np.ndarray,list)):
+        list_of_tuples = list(list_of_tuples)
+    if len(list_of_tuples) == 0:
+        return list_of_tuples
+    elif not isinstance(list_of_tuples[0], (list, tuple)):
+        return np.sort(list_of_tuples)
+    else:
+        first_el_list = [el[0] for el in list_of_tuples]
+        argsort = np.argsort(first_el_list)
+        return sort_list_by_argsort(list_of_tuples, argsort)
+        #return 
+    
+            
         
 
 def gaussian_convolve(mat, wind = 10, direction = 1, sigma = 1, norm_sum = True, plot_gaussian = False):
@@ -2019,7 +2081,7 @@ def str2bool(str_to_change):
         str2bool('true') -> True
     """
     if isinstance(str_to_change, str):
-        str_to_change = (str_to_change.lower()  == 'true') or (str_to_change.lower()  == 'yes')  or (str_to_change.lower()  == 't')
+        str_to_change = (str_to_change.lower()  == 'true') or (str_to_change.lower()  == 'yes')  or (str_to_change.lower()  == 't') or (str_to_change.lower() == 'y')
     return str_to_change
 
 from glob import glob
@@ -2148,8 +2210,298 @@ def create_colors(len_colors, perm = [0,1,2], style = 'random', cmap  = 'viridis
             random.shuffle(colors)
             
     return colors
+from sklearn.decomposition import DictionaryLearning
+def fast_dLDS(data, lambda_l1,k, lambda_l1_repeats = None, solver = 'spgl1' , solve_all_T_together = True, seed = 0, max_iter=100,positive_code=False,verbose=False,max_iter_update = 10, tau = 15,
+              lambda_const = 0.0001):
+    """
+    # data is units (e.g. neurons) X time. 
+    # we want to find a wide F_wide matrix [f1, f2 , f3.... fk] each f is nXn, overall size is n x nk. It is not a function of time
+    # C_wide is a matrix of nk X time. It includes a lot of repeats for nk. C_wide can also be written via np.kron(C_basic, np.ones(k,1)) where C_basic is k X time. 
+    # # future idea:  make C non repeatable to enable different rows to change!
+    # data_plus : data[:,1:] # neurons by time
+    # data_minus : data[:,:-1] # neurons by time
+    # lets build a zeros matrix: block_minus = np.kron(np.eye(k), x_minus[t]) matrix: # nk X k
+    # now F_wide_tilde = F_wide @ block_minus is n X k
+    # then F_wide_tilde @ C_basic works to give n X 1 which is consistent with x_plus[t]
+    ################## find data_plus[t] = F_wide @  block[t] @ C_basic
+    ################## now we can do it for all time points together: F_wide is not a function of time. We can hstack these to get :
+    # block_full = hstacking the block for all times getting nk X kt
+    # C_basic_full: vstacking to get column vec of (kt,1) s.t. [c_(1,t0), c_(2,t0), ... c_(k,t0), c_(1,t1)....]
+    #  data_plus = F_wide @ block_full @ c_basic full. 
+    # the disadvantge of enabling one time solving is that here the reuglariozation over c take into account all Ts together.
+    # we can then apply DL with reg on c_basic and since we know data_minus we can extract F_wide.
+    # an easier appraoch is time X neurons. then for each t in do the above although I think we can do for all ts at once?
+    
+        
+    Returns:
+        F_wide: (n, n*k)
+        C_basic: (k, T-1)
+        
+    # todo: 
+        - check if there is any way to solve it faster by first taking transpose. i.e. some form of data_plus = something @ data_minus
+    """
+    n, T = data.shape
+    if np.isnan(lambda_l1_repeats):
+        lambda_l1_repeats = lambda_l1
+    N = n
+    tau  = np.min([tau, T-1])
+    print('n: %d; T:%d'%(n,T))
+    data_plus = data[:, 1:]    # (n, T-1)
+    data_minus = data[:, :-1]  # (n, T-1)
 
+    # Build block_full by horizontally stacking kron(I_k, x_minus_t) for all t
+    blocks = []
+    for t in range(T-1):
+        x_minus_t = data_minus[:, t].reshape(-1,1)  # (n,1)
+        block_t = np.kron(np.eye(k), x_minus_t)    # (n*k, k)
+        blocks.append(block_t)
+    block_full = np.hstack(blocks)  # (n*k, k*(T-1))
+    
+    # Use DictionaryLearning to find sparse codes C_basic_full.T
+    if solve_all_T_together:
+        #the problem here is that we need to sum all components
+        n_components = k*(T-1)
+        print('n components: %d'%n_components)
+        dict_learner = DictionaryLearning(
+            n_components=n_components, transform_algorithm=solver, transform_alpha=lambda_l1,
+            random_state=seed        )
+        data_plus_sum = data_plus.sum(1).reshape((-1,1))
+        dict_learner.fit(data_plus_sum.T)
+        F_wide_x = dict_learner.components_  
+        
+        c_transformed = dict_learner.transform(data_plus_sum.T)
+        print('shape c is %s'%str(c_transformed.shape))
+        ############# F_wide_x.T = F @ block_full
+        # to get F:
+        print('F_wide_x shape %s'%str(F_wide_x.shape))
+        print('block_full shape %s'%(str(block_full.shape)))
+        F_wide = F_wide_x.T  @ np.linalg.pinv(block_full)
+    else:
+        # options:
+        # OPTION 1:use group lasso to do: X+ @ (X-)^T = F @ C where C = [c_1, c_1, c_1...., c_2....]. then take the avg within each group
+        #the problem here is that we need to sum all components
+        if  5>3 :# is not good since you have only 1 sample per time
+            n_components = k
+            c_transformed = []
+            Fs = []
+            for t in range(T-1):
+                print('n components: %d'%n_components)
+                dict_learner = DictionaryLearning( #fit_algorithm='lasso_lars',
+                    n_components=n_components, transform_algorithm='lasso_lars', transform_alpha=lambda_l1,
+                    random_state=seed        )
+                data_plusT  = data_plus[:,t].reshape((1,-1)) #.sum(1).reshape((-1,1))
+                dict_learner.fit(data_plusT)
+                F_wide_x = dict_learner.components_  
+                
+                c_transformedT = dict_learner.transform(data_plusT)
+                print('shape c is %s'%str(c_transformedT.shape))
+                assert 1 in c_transformedT.shape
+            
+                c_transformed.append(c_transformedT.reshape((-1,1)))
+                ############# F_wide_x.T = F @ block_full
+                # to get F:
+                print('F_wide_x shape %s'%str(F_wide_x.shape))
+                
+                block = blocks[t]
+                print('block shape %s'%(str(block.shape)))
+                F_wideT = F_wide_x.T  @ np.linalg.pinv(block)
+                Fs.append(F_wideT)
+            # Fs # this is a list of Fs for all times. We need to take the avg and then retrain over iterations
+            F_wide = np.mean(np.dstack(Fs), 2)
+            c_transformed = np.hstack(c_transformed) # this is k X T matrix, for the coeffs in each
+            
+            ########################## now iterations
+            for iter_num in range(max_iter_update):
+                np.random.seed(iter_num)
+                ts = np.random.choice(np.arange(T-1), size = tau, replace = False) #tau =  num time points to thceck
+                print('iter %d'%iter_num)
+                x_c_diag_list = []
+                
+                for t in ts:
+                    block = blocks[t]
+                    ###################### update c by solving: x+ = F @ block @ c_basic
+                    F_block = F_wide @ block
+                    x_plus = data_plus[:,t]
+                    x_minus = data_minus[:,t]
+                    c_former = c_transformed[:,t]
+                    c = solve_Lasso_style(F_block, x_plus, lambda_l1_repeats, x0 = c_former, params = {'solver':solver}, lasso_params = {}, random_state = 0)
+                    print(c)
+                    c_transformed[:,t] = c
+                    ############# 
+                    c_diag = np.kron(c[:, None], np.eye(N))
+                    x_c_diag = c_diag @ x_minus.reshape((-1,1))
+                    x_c_diag_list.append(x_c_diag.reshape((-1,1)))
+                ############# update F: define: for each t: c_diag = np.kron(c[:, None], np.eye(len(c))) (this is vstack of diagonal matrices with c1, c2...). 
+                ############ then x_c_diag = c_diag @ x_minus (vector of kn X 1)
+                ############# concatinate x+, x_c_diag (vector of n X 1 -> n X T)
+                # left: x+ : N x T
+                # right: x_c_diags : nk X T
+                # F_wide needs to be: N X nk
+                # solve: left = F @ right
+                nk = N*k
+                x_plus_now = data_plus[:, ts]
+                x_minus_now = np.hstack(x_c_diag_list)#data_minus #[:,ts]
+                left = np.hstack([x_plus_now, np.zeros((N, nk))])
+                right = np.hstack([x_minus_now, lambda_const * np.eye(nk)])
+                F_wide = left @ np.linalg.pinv(right)
+                
+                #################### update c + constraint
+                # for t in ts:
+                #     block = blocks[t]
+                #     ###################### update c by solving: x+ = F @ block @ c_basic
+                #     F_block = F_wide @ block
+                #     x_plus = data_plus[:,t]
+                #     c_former = c_transformed[:,t]
+                #     c = solve_Lasso_style(F_block, x_plus, lambda_l1, x0 = c_former, params = {'solver':solver}, lasso_params = {}, random_state = 0)
+                #     c_transformed[:,t] = c
+                #     ############# 
+                    
+            
+          
+            
+        else:
+            raise ValueError('how')
+        # use group lasso?
+        # OPTION 2: just train DL for each t then take avg of dictionaries
+        #raise ValueError('to be implemented. the problem is that we need a fixed dict for all Ts. i.e. Y = AX where x is sparse per col but a matrix. maybe via  SPAMS ')
+        
+    # get f from F_wide
+    bins = np.linspace(0, F_wide.shape[1] , k+1).astype(int)
+    F = [F_wide[:, k1:k2] for k1, k2 in zip(bins[:-1], bins[1:])]
+    return F, c_transformed, block_full, Fs, F_wide
+    
+    
 
+def solve_Lasso_style(A, b, l1, x0 = [], params = {}, lasso_params = {}, random_state = 0):
+  """
+      Solves the l1-regularized least squares problem
+          minimize (1/2)*norm( A * x - b )^2 + l1 * norm( x, 1 ) 
+          
+    Parameters
+    ----------
+    A : TYPE
+        DESCRIPTION.
+    b : TYPE
+        DESCRIPTION.
+    l1 : float
+        scalar between 0 to 1, describe the reg. term on the cofficients.
+    x0 : TYPE
+        DESCRIPTION.
+    params : TYPE, optional
+        DESCRIPTION. The default is {}.
+    lasso_params : TYPE, optional
+        DESCRIPTION. The default is {}.
+    random_state : int, optional
+        random state for reproducability. The default is 0.
+
+    Raises
+    ------
+    NameError
+        DESCRIPTION.
+
+    Returns
+    -------
+    x : np.ndarray
+        the solution for min (1/2)*norm( A * x - b )^2 + l1 * norm( x, 1 ) .
+
+  lasso_options:
+               - 'inv' (least squares)
+               - 'lasso' (sklearn lasso)
+               - 'fista' (https://pylops.readthedocs.io/en/latest/api/generated/pylops.optimization.sparsity.FISTA.html)
+               - 'omp' (https://pylops.readthedocs.io/en/latest/gallery/plot_ista.html#sphx-glr-gallery-plot-ista-py)
+               - 'ista' (https://pylops.readthedocs.io/en/latest/api/generated/pylops.optimization.sparsity.ISTA.html)       
+               - 'IRLS' (https://pylops.readthedocs.io/en/latest/api/generated/pylops.optimization.sparsity.IRLS.html)
+               - 'spgl1' (https://pylops.readthedocs.io/en/latest/api/generated/pylops.optimization.sparsity.SPGL1.html)
+               
+               
+               - . Refers to the way the coefficients should be claculated (inv -> no l1 regularization)
+  """ 
+  if np.isnan(A).any():
+      print('there is a nan in A')
+      #input('ok? solve_Lasso_style')
+  if len(b.flatten()) == np.max(b.shape):
+      b = b.reshape((-1,1))
+  if 'solver' not in params.keys():
+      warnings.warn('Pay Attention: Using Default (inv) solver for updating A. If you want to use lasso please change the solver key in params to lasso or another option from "solve_Lasso_style"')
+  params = {**{'threshkind':'soft','solver':'inv','num_iters':10}, **params}
+
+  if params['solver'] == 'inv' or l1 == 0:
+      if len(b.flatten()) == np.max(b.shape ):
+          x = linalg.pinv(A) @ b.reshape((-1,1))
+      else:
+          x = linalg.pinv(A) @ b
+      
+      
+  elif params['solver'] == 'nnls':
+      # solves for x:   minimize ||Ax - b||²  subject to x ≥ 0
+      if b.ndim == 1 or len(b.flatten()) == max(b.shape):
+          
+          try:
+              x = nnls(A , b.flatten())[0]
+          except:
+              print('shape A: %s; shape b : %s; b.ndim == 1 %s; len(b.flatten() == max(b.shape)) %s '%(str(A.shape), str(b.shape), str(b.ndim == 1), len(b.flatten()) == max(b.shape)) )
+      else:
+        # identify which dimensions match
+                   
+        # find x
+        if b.shape[0] == A.shape[0]:
+            x = np.hstack([(nnls(A , b[:,j].flatten())[0]).reshape((-1,1)) for j in range(b.shape[1])])
+        elif b.shape[0] == A.shape[1]:
+            x = np.hstack([(nnls(A , b[j,:].flatten())[0]).reshape((-1,1)) for j in range(b.shape[1])])
+        else:
+            raise ValueError('dimension mismatch?! A dim is %s; x dim is %s; b dim dim is %s'%(str(A.shape), str(x.shape), str(b.shape)))
+          
+        # make sure that x is compatible with structures
+        assert x.shape[0] == A.shape[1]
+
+  elif params['solver'] == 'lasso' :
+      #fixing try without warm start
+    clf = linear_model.Lasso(alpha=l1,random_state=random_state, **lasso_params)
+
+    #input('ok?')
+    clf.fit(A,b.flatten() )     #reshape((-1,1))
+    x = np.array(clf.coef_)
+
+  elif params['solver'].lower() == 'fista' :
+      Aop = pylops.MatrixMult(A)
+  
+      #if 'threshkind' not in params: params['threshkind'] ='soft'
+      #other_params = {'':other_params[''],
+      x = pylops.optimization.sparsity.FISTA(Aop, b.flatten(), niter=params['num_iters'],
+                                             eps = l1 , threshkind =  params.get('threshkind') )[0]
+  elif params['solver'].lower() == 'ista' :
+
+      #fixing try without warm start
+      if 'threshkind' not in params: params['threshkind'] ='soft'
+      Aop = pylops.MatrixMult(A)
+      x = pylops.optimization.sparsity.ISTA(Aop, b.flatten(), niter=params['num_iters'] , 
+                                                 eps = l1,threshkind =  params.get('threshkind'))[0]
+      
+  elif params['solver'].lower() == 'omp' :
+  
+      Aop = pylops.MatrixMult(A)
+      x  = pylops.optimization.sparsity.OMP(Aop, b.flatten(), 
+                                                 niter_outer=params['num_iters'], sigma=l1)[0]     
+  elif params['solver'].lower() == 'spgl1' :
+      print('spgl1')
+      Aop = pylops.MatrixMult(A)
+      x = pylops.optimization.sparsity.SPGL1(Aop, b.flatten(),iter_lim = params['num_iters'], 
+                                             tau = l1)[0]      
+      
+  elif params['solver'].lower() == 'irls' :
+   
+      Aop = pylops.MatrixMult(A)
+      
+      #fixing try without warm start
+      x = pylops.optimization.sparsity.IRLS(Aop, b.flatten(),  nouter=50, espI = l1)[0]      
+  else:     
+    raise NameError('Unknown update c type')  
+  return x
+
+    
+    
+    
+    
 def order_grandchildren_in_hierarchical_dict(hierarchical_dict_cur, cur_key = '', cur_list = []):
   # example:
   # #simple_dict = {'parent':{'kid1':{}, 'kid2':{}, 'kid3':{'grand1':{}, 'grand2':{}}}}
@@ -2365,8 +2717,10 @@ def save_df_as_fig(df, params_dict={}):
 
 def from_spike_times_to_rate(spike_dict, type_convert = 'discrete',
                              res = 0.01, max_min_val = [], return_T = False, 
-                             T_max = np.inf, T_min = 0,  
-                             params_gauss = {'wind' : 10, 'direction' : 1, 'sigma' : 1, 'norm_sum' : True, 'plot_gaussian' : False}):
+                             T_max = np.inf, T_min = 0,  return_time_axis = False,
+                             need_to_take_T_resolution = False, # recommend True if T_max is that same res and spike dict
+                             params_gauss = {'wind' : 10, 'direction' : 1, 'sigma' : 1, 'norm_sum' : True, 'plot_gaussian' : False},
+                             limit_to_t_min_t_max = False):
     """
     Converts spike times to firing rates.
     spike dict is dictionary of units vs spike times
@@ -2395,32 +2749,44 @@ def from_spike_times_to_rate(spike_dict, type_convert = 'discrete',
 
 
     """  
+    assert 1*return_T + 1*return_time_axis < 2, "you cannot have both return_T and return_time_axis. chooe one"
     if isinstance(spike_dict , (np.ndarray, list)):
         spike_dict = {1: spike_dict}       
         
         
     if T_min >= T_max:
         raise ValueError('T_min must be larger than T_max')
+        
+    if need_to_take_T_resolution:
+        T_max = T_max / res
+        T_min = T_min / res
+        
+    
+        
     if res != 1:
         spike_dict = {key:np.array(val) / res for key,val in spike_dict.items()}
     if T_min > 0:
         spike_dict = {key:val - T_min for key,val in spike_dict.items()}
         spike_dict = {key : val[val > 0] for key,val in spike_dict.items()}
-    print(type(spike_dict))
-        
+
+    dict_spike_times = np.array(lists2list(list(spike_dict.values()))).flatten()
+
+    assert dict_spike_times.max() > T_min and dict_spike_times.min() < T_max, "T_max and T_min results in empty spikes %d %d %d %d"%(dict_spike_times.max() , T_min , dict_spike_times.min() , T_max)
     """
     make sure keys are continues
     """
     if set(np.arange(len(spike_dict))) != set(list(spike_dict.keys())):
         new_keys = np.arange(len(spike_dict))
-        old_keys = list(spike_dict.keys())
+        old_keys = np.sort(list(spike_dict.keys()))
         old2new = {old:new for old,new in zip(old_keys, new_keys)}
         spike_dict = {old2new[key]:val for key,val in spike_dict.items()}
     else:
         old2new = {}
     
-    
-    
+    spike_dict_keys_sorted = np.sort(list(spike_dict.keys()))
+    times_dict_sorted = [spike_dict[neuron] for neuron in spike_dict_keys_sorted]
+    #print(spike_dict)
+    #input('ok?!?!')    
     if checkEmptyList(max_min_val):
         try:
             min_val = np.min([np.min(val) for val in list(spike_dict.values()) if len(val) > 0])
@@ -2436,22 +2802,38 @@ def from_spike_times_to_rate(spike_dict, type_convert = 'discrete',
     #         T_min = min_val
     #     spike_dict = {key : val - T_min for key,val in spike_dict.items()}
     #     spike_dict = {key : val[val > 0] for key,val in spike_dict.items()}
-        
-    if T_min > 0:
-        max_val = max_val - T_min     
-    max_val = int(np.ceil(max_val))
-    max_val = int(np.min([max_val, T_max]))
+    if not limit_to_t_min_t_max:
+        if T_min > 0:
+            max_val = max_val - T_min     
+        max_val = int(np.ceil(max_val))
+        max_val = 1+ int(T_max if T_max < 10**7 else int(np.min([max_val, T_max])))
+    else:
+        #if T_min > 0:
+        max_val = int(T_max - T_min)
     firing_rate_mat = np.zeros((int(N) ,max_val))    
 
         
     if type_convert == 'discrete':         
         T_thres = T_max #- T_min
+        #print('T_thres %s'%T_thres)
+        #input('ok>!?!?')
+        
+        #tup_neurons_and_spikes = np.vstack([ np.hstack([np.array([neuron]*np.sum( times < T_thres )).reshape((-1,1)) , np.array(times[ times < T_thres]).reshape((-1,1)) ])
+        #                          for neuron, times  in spike_dict.items()])
+        
         tup_neurons_and_spikes = np.vstack([ np.hstack([np.array([neuron]*np.sum( times < T_thres )).reshape((-1,1)) , np.array(times[ times < T_thres]).reshape((-1,1)) ])
-                                  for neuron, times  in spike_dict.items()])
+                                  for neuron, times  in zip(spike_dict_keys_sorted , times_dict_sorted) ])
+        
         rows =  tup_neurons_and_spikes[:,0]
         cols =  tup_neurons_and_spikes[:,1]
+        assert len(rows) == len(cols), '%d_%d'%(len(rows), len(cols))
         
+        #print('cols %s'%cols)
+        
+        #input('cols ok?')
         data = np.ones(len(rows))  # Assuming all values are 1
+        assert len(data) == len(cols), '%d_%d'%(len(data), len(cols))
+        assert cols.max() < max_val, 'max_val_%d, col max %d'%(max_val, cols.max())
         sparse_mat = coo_matrix((data, (rows, cols)), shape=(N, max_val))
         
         # for count, (neuron, times) in enumerate(spike_dict.items()):
@@ -2465,12 +2847,19 @@ def from_spike_times_to_rate(spike_dict, type_convert = 'discrete',
         firing_rate_mat = sparse_mat.toarray()
         firing_rate_mat_gauss = gaussian_convolve(firing_rate_mat,  **params_gauss)
             
-    if T_min > 0 :     
-        firing_rate_mat = firing_rate_mat[:, T_min:]
-        firing_rate_mat_gauss = firing_rate_mat_gauss[:, T_min:]
+    #if T_min > 0 :     
+    #    firing_rate_mat = firing_rate_mat[:, T_min:]
+    #    firing_rate_mat_gauss = firing_rate_mat_gauss[:, T_min:]
     if return_T:
         return  firing_rate_mat, firing_rate_mat_gauss, return_T
+    if return_time_axis:
+        time_axis = np.arange(T_min*res, T_max*res, res)
+        assert len(time_axis) == firing_rate_mat.shape[1], "len mismatch. durations are time_axis %d vs rate_mat %d"%(len(time_axis), firing_rate_mat.shape[1])
+        return  firing_rate_mat, firing_rate_mat_gauss, old2new, time_axis
     return  firing_rate_mat, firing_rate_mat_gauss, old2new
+
+
+
 
 def split_to_trials(spikes_info = {}, firing_rate_mat = [], trial_start_array = [], trial_end_array = [], trial_word = 'trial', trial_key_type = 'str'):
     """
